@@ -7,8 +7,7 @@
 ## 1. Công việc đã hoàn thành
 | Thành viên | MSSV | Công việc | Link Commit/PR |
 |------------|------|-----------|----------------|
-| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch  
-Khởi tạo cấu trúc Repo chuẩn | [abc123](link) |
+| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch, khởi tạo cấu trúc Repo chuẩn | [abc123](link) |
 | Hồ Ngọc Minh | 2251012092 | Đề xuất đề tài, lập kế hoạch 10 tuần | [def456](link) |
 ---
 ## 2. Tiến độ tổng thể
