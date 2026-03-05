@@ -7,8 +7,9 @@
 ## 1. Công việc đã hoàn thành
 | Thành viên | MSSV | Công việc | Link Commit/PR |
 |------------|------|-----------|----------------|
-| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch | [abc123](link) |
-| Hồ Ngọc Minh | 2251012092 | Đề xuất đề tài | [def456](link) |
+| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch  
+Khởi tạo cấu trúc Repo chuẩn | [abc123](link) |
+| Hồ Ngọc Minh | 2251012092 | Đề xuất đề tài, lập kế hoạch 10 tuần | [def456](link) |
 ---
 ## 2. Tiến độ tổng thể
 | Hạng mục | Trạng thái | % |
@@ -24,8 +25,8 @@
 ## 3. Kế hoạch tuần tới
 | Thành viên | Công việc dự kiến |
 |------------|-------------------|
-| Phan Nguyễn Linh Năng | Chuẩn bị văn kiện, kế hoạch, giấy tờ |
-| Hồ Ngọc Minh | Phân tích yêu cầu |
+| Phan Nguyễn Linh Năng | Thiết kế Wireframes cho các màn hình chính |
+| Hồ Ngọc Minh | Phân tích các Use Case hệ thống, viết file requirements.md |
 ---
 ## 4. Khó khăn / Cần hỗ trợ
 - [ ] [Mô tả khó khăn nếu có]
