@@ -1,4 +1,4 @@
-# 2DEL - 
+# Phòng Khám Thú Y 2DEL
 ## Mô tả
 [Mô tả ngắn gọn về dự án]
 ## Thành viên nhóm
