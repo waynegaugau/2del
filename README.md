@@ -19,7 +19,6 @@
 - PostgreSQL
 ### Chạy Backend
 cd backend
-./mvnw spring-boot:run
 ### Chạy Frontend
 cd frontend
 npm install
