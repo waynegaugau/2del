@@ -20,9 +20,9 @@
 ### Chạy Backend
 cd backend
 ### Chạy Frontend
-cd frontend
-\n npm install
-npm start
+cd frontend  
+npm install  
+npm start  
 ### Truy cập
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080
