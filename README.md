@@ -1,11 +1,11 @@
-# Tên dự án
+# 2DEL - 
 ## Mô tả
 [Mô tả ngắn gọn về dự án]
 ## Thành viên nhóm
 | MSSV | Họ tên | Vai trò |
 |------|--------|---------|
-| 2251012099 | Phan Nguyễn Linh Năng | ... |
-| 2251012092 | Hồ Ngọc Minh | ... |
+| 2251012099 | Phan Nguyễn Linh Năng | Project Manager, Frontend Developer |
+| 2251012092 | Hồ Ngọc Minh | Backend Developer, QA/Tester |
 
 ## Công nghệ sử dụng
 - Backend: Python, Django, Django ORM  
@@ -14,13 +14,13 @@
 
 ## Cài đặt và chạy
 ### Yêu cầu
-- Java 17+
-- Node.js 18+ (nếu dùng React)
+- Python 3.14+
+- Node.js 18+
 - PostgreSQL
 ### Chạy Backend
 cd backend
 ./mvnw spring-boot:run
-### Chạy Frontend (nếu dùng React)
+### Chạy Frontend
 cd frontend
 npm install
 npm start
