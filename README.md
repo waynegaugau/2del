@@ -6,12 +6,12 @@
 |------|--------|---------|
 | 2251012099 | Phan Nguyễn Linh Năng | ... |
 | 2251012092 | Hồ Ngọc Minh | ... |
----
+
 ## Công nghệ sử dụng
 - Backend: Python, Django, Django ORM  
 - Frontend: ReactJS
 - Database: PostgreSQL
----
+
 ## Cài đặt và chạy
 ### Yêu cầu
 - Java 17+
