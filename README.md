@@ -8,7 +8,7 @@
 | 2251012092 | Hồ Ngọc Minh | Backend Developer, QA/Tester |
 
 ## Công nghệ sử dụng
-- Backend: Python, Django, Django ORM  
+- Backend: Python, Django, Django REST Framework  
 - Frontend: ReactJS
 - Database: PostgreSQL
 
