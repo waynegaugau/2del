@@ -29,8 +29,7 @@
 | Hồ Ngọc Minh | Phân tích các Use Case hệ thống, viết tiếp file requirements.md |
 ---
 ## 4. Khó khăn / Cần hỗ trợ
-- [ ] [Mô tả khó khăn nếu có]
-- [ ] [Câu hỏi cần GV giải đáp nếu có]
+- Hiện tại chưa có khó khăn cụ thể.
 ---
-*Ngày nộp: 07.03.2026*  
+*Ngày nộp: 22:16 07.03.2026*  
 *Xác nhận của Nhóm trưởng: Phan Nguyễn Linh Năng*
