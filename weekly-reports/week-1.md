@@ -7,8 +7,8 @@
 ## 1. Công việc đã hoàn thành
 | Thành viên | MSSV | Công việc | Link Commit/PR |
 |------------|------|-----------|----------------|
-| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch, khởi tạo cấu trúc Repo chuẩn | [abc123](link) |
-| Hồ Ngọc Minh | 2251012092 | Đề xuất đề tài, lập kế hoạch 10 tuần | [def456](link) |
+| Phan Nguyễn Linh Năng | 2251012099 | Phân công, chuẩn bị kế hoạch, khởi tạo cấu trúc Repo chuẩn | [75d7599](https://github.com/waynegaugau/2del/commit/75d75998114b50221cc856d705f974c91e13b972) |
+| Hồ Ngọc Minh | 2251012092 | Đề xuất đề tài, lập kế hoạch 10 tuần | [44cce27](https://github.com/waynegaugau/2del/commit/44cce27b7a98e866d763bfedb0f98df37ac71e81) |
 ---
 ## 2. Tiến độ tổng thể
 | Hạng mục | Trạng thái | % |
