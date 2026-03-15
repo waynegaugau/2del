@@ -1,6 +1,6 @@
 # Phòng Khám Thú Y 2DEL
 ## Mô tả
-[Mô tả ngắn gọn về dự án]
+Xây dựng hệ thống cho phép chủ thú cưng đăng ký hồ sơ thú, đặt lịch khám/grooming và thanh toán.Phòng khám quản lý lịch hẹn, hồ sơ bệnh án và kho thuốc. Admin quản lý nhiều phòng khám và báo cáo.
 ## Thành viên nhóm
 | MSSV | Họ tên | Vai trò |
 |------|--------|---------|
