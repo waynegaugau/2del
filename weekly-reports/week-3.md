@@ -20,7 +20,7 @@
 | Frontend UI | Đang làm | 7% |
 | Docker | Chưa bắt đầu | 0% |
 | Testing | Chưa bắt đầu | 0% |
-**Tổng tiến độ: 20.78%**
+**Tổng tiến độ: 36.18%**
 ---
 ## 3. Kế hoạch tuần tới
 | Thành viên | Công việc dự kiến |
@@ -32,5 +32,5 @@
 - Các đầu công việc hơi nhiều, các mục tiêu cần được cụ thể chi tiết hơn.
 - Các luồng dữ liệu, bảng và cơ sở dữ liệu đang bị rối, cần tinh gọn và tối giản hơn cho hiệu quả.
 ---
-*Ngày nộp: 22:17 22.03.2026*  
+*Ngày nộp: 22:54 22.03.2026*  
 *Xác nhận của Nhóm trưởng: Phan Nguyễn Linh Năng*
