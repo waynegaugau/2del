@@ -1,74 +1,545 @@
+
 # Hệ thống quản lý thú cưng/phòng khám thú y - Requirements
 
+----------
+
 ## 1. Actors
+
 Hệ thống có 3 tác nhân chính:
 
-- Chủ thú cưng
-- Phòng khám/Groomer
-- Admin
+-   **Chủ thú cưng (Pet Owner)**
+    
+-   **Phòng khám/Groomer (Business User)**
+    
+-   **Admin (System Admin)**
+    
+
+----------
 
 ## 2. Functional Requirements
 
 ### 2.1 Chủ thú cưng
-- Tạo hồ sơ thú cưng (tiêm phòng, bệnh sử)
-- Đặt lịch khám/grooming
-- Thanh toán dịch vụ
+
+-   Tạo và quản lý hồ sơ thú cưng
+    
+-   Đặt lịch khám/grooming
+    
+-   Thanh toán dịch vụ
+    
 
 ### 2.2 Phòng khám/Groomer
-- Quản lý lịch hẹn và check-in
-- Quản lý hồ sơ bệnh án
-- Kê đơn và quản lý thuốc
+
+-   Quản lý lịch hẹn và check-in
+    
+-   Quản lý hồ sơ bệnh án
+    
+-   Kê đơn và quản lý thuốc
+    
 
 ### 2.3 Admin
-- Quản lý phòng khám (CRUD)
-- Quản lý tài khoản bác sĩ/nhân viên
-- Quản lý danh mục dịch vụ
 
-## 3. Use Case Diagram
+-   Quản lý phòng khám (CRUD)
+    
+-   Quản lý tài khoản bác sĩ/nhân viên
+    
+-   Quản lý danh mục dịch vụ
+    
 
-<p align="center">
-  <img src="UseCasePetCare.png" width="700">
+----------
+
+## 3. Global Business Rules
+
+-   Không xóa cứng dữ liệu đã phát sinh (appointment, medical record, payment)
+    
+-   Mọi dữ liệu phải có audit log (created_at, updated_at)
+    
+-   Phân quyền theo role và clinic
+    
+-   Dữ liệu thú cưng là trung tâm của hệ thống
+    
+
+----------
+
+## 4. Use Case Diagram
+
+  
+
+<p  align="center">
+
+<img  src="UseCasePetCare.png"  width="700">
+
 </p>
 
-## 4. Use Case Specifications
+  
 
-### 4.1 Đặt lịch khám/Grooming
+----------
 
-Use case ID|UC01|
+## 5. Use Case Specifications
+
+----------
+
+# UC01 - Đặt lịch khám/Grooming
+
+|Thuộc tính | Mô tả |
 |---|---|
-|Tên use case|Đặt lịch khám/Grooming|
-|Mô tả|Chủ thú cưng đặt lịch khám hoặc grooming cho thú cưng tại phòng khám|
-|Actor chính|Chủ thú cưng|
-|Actor phụ|Phòng khám/Groomer|
-|Pre-Conditions <br> (Tiền điều kiện)|Chủ thú cưng đã đăng nhập vào hệ thống|
-|Post-Conditions <bt> (Hậu điều kiện)|Hệ thống tạo lịch hẹn mới và thông báo cho phòng khám|
-|Luồng hoạt động|1. Chủ thú cưng truy cập chức năng **Đặt lịch**. <br> 2. Hệ thống hiển thị danh sách thú cưng của người dùng. <br> 3. Chủ thú cưng chọn thú cưng cần đặt lịch. <br> 4. Hệ thống hiển thị danh sách dịch vụ (khám bệnh, grooming,...). <br> 5. Chủ thú cưng chọn dịch vụ mong muốn. <br> 6. Hệ thống hiển thị danh sách phòng khám và lịch trống. <br> 7. Chủ thú cưng chọn phòng khám và thời gian. <br> 8. Chủ thú cưng xác nhận đặt lịch. <br> 9. Hệ thống lưu thông tin lịch hẹn và gửi thống báo đến phòng khám.|
-|Luồng thay thế|A1 - Không có lịch trống <br> Ở bước 7 nếu phòng khám không có lịch trống, hệ thống hiển thị thông báo và yêu cầu người dùng chọn thời gian khác.|
-|Luồng ngoại lệ|E1 - Lỗi hệ thống <br> Nếu hệ thống không thể tạo lịch hẹn, hiển thị thông báo lỗi và yêu cầu người dùng thử lại.|
+| Use case ID | UC01 |
+| Actor chính | Chủ thú cưng |
+|Actor phụ | Phòng khám/Groomer |
+| Mô tả | Chủ thú cưng đặt lịch khám hoặc grooming |
 
-### 4.2 Quản lý lịch hẹn và Check-in
+### Pre-conditions
 
-|Use case ID|UC02|
+-   Người dùng đã đăng nhập
+    
+-   Có ít nhất 1 hồ sơ thú cưng
+    
+-   Phòng khám đang hoạt động
+    
+
+### Post-conditions
+
+-   Tạo lịch hẹn mới
+    
+-   Trạng thái: Pending hoặc Confirmed
+    
+
+### Input
+
+-   petId
+    
+-   serviceId
+    
+-   clinicId
+    
+-   datetime
+    
+-   note
+    
+
+### Output
+
+-   appointmentId
+    
+-   status
+    
+
+### Business Rules
+
+-   Không cho đặt lịch trong quá khứ
+    
+-   Không cho đặt trùng lịch của cùng thú cưng
+    
+-   Phải nằm trong giờ làm việc của phòng khám
+    
+-   Slot phải còn trống
+    
+-   Có thể cần phòng khám xác nhận (Pending)
+    
+
+### Main Flow
+
+1.  User chọn thú cưng
+    
+2.  Chọn dịch vụ
+    
+3.  Chọn phòng khám
+    
+4.  Chọn thời gian
+    
+5.  Hệ thống kiểm tra slot khả dụng
+    
+6.  User xác nhận
+    
+7.  Hệ thống tạo lịch
+    
+8.  Gửi thông báo
+    
+
+### Alternative Flow
+
+A1 - Không có slot trống  
+→ Gợi ý thời gian khác
+
+### Exception Flow
+
+E1 - Lỗi hệ thống  
+→ Hiển thị lỗi
+
+----------
+
+# UC02 - Quản lý lịch hẹn & Check-in
+
+| Thuộc tính | Mô tả |
 |---|---|
-|Tên use case|Quản lý lịch hẹn và check-in|
-|Mô tả|Phòng khám hoặc groomer quản lý lịch hẹn và thực hiện check-in khi thú cưng đến khám.|
-|Actor chính|Phòng khám/Groomer|
-|Actor phụ|Chủ thú cưng|
-|Pre-Conditions <br> (Tiền điều kiện)|Đã có lịch hẹn được tạo trên hệ thống|
-|Post-Conditions <br> (Hậu điều kiện)|Hệ thống cập nhật trạng thái thành **Checked-in** hoặc **Completed**|
-|Luồng hoạt động|1. Nhân viên phòng khám truy cập chức năng **Quản lý lịch hẹn**. <br> 2. Hệ thống hiện thị danh sách lịch hẹn trong ngày. <br> 3. Nhân viên chọn một lịch hẹn. <br> 4. Hệ thống hiện thị thông tin thú cưng và dịch vụ. <br> 5. Khi thú cưng đến, nhân viên chọn **Check-in**. <br> 6. Hệ thống cập nhật trạng thái lịch hẹn thành **Checked-in**.|
-|Luồng thay thế|A1-Khách đến trễ <br> Ở bước 5 nếu khách đến không đúng lịch hẹn, Nhân viên có thể chọn dời lịch hoặc đánh dấu **No-show**.|
-|Luồng ngoại lệ|E1-Lỗi hệ thống <br> Nếu hệ thống không thể cập nhật trạng thái, hiển thị thông báo lỗi và yêu cầu thử lại.|
+| Use case ID | UC02 |
+| Actor chính | Phòng khám/Groomer |
+| Actor phụ | Chủ thú cưng |
 
-### 4.3 Quản lý phòng khám(CRUD)
+### Pre-conditions
 
-|Use case ID|UC03|
+-   Lịch hẹn tồn tại
+    
+-   Nhân viên có quyền truy cập
+    
+
+### Post-conditions
+
+-   Trạng thái được cập nhật (Checked-in, Completed)
+    
+
+### Business Rules
+
+-   Không check-in lịch đã hủy
+    
+-   Chỉ check-in lịch đã Confirmed
+    
+-   Có thể đánh dấu No-show
+    
+
+### Main Flow
+
+1.  Nhân viên xem lịch
+    
+2.  Chọn lịch hẹn
+    
+3.  Khi khách đến → Check-in
+    
+4.  Hệ thống cập nhật trạng thái
+    
+
+### Alternative Flow
+
+A1 - Khách đến trễ  
+→ Reschedule hoặc No-show
+
+### Exception Flow
+
+E1 - Lỗi cập nhật  
+→ Thông báo lỗi
+
+----------
+
+# UC03 - Quản lý phòng khám (CRUD)
+
+| Thuộc tính | Mô tả |
 |---|---|
-|Tên use case|Quản lý phòng khám|
-|Mô tả|Admin quản lý thông tin phòng khám trong hệ thống|
-|Actor chính|Admin|
-|Pre-Conditions <br> (Tiền điều kiện)|Admin đã đăng nhập vào hệ thống|
-|Post-Conditions <br> (Hậu điều kiện)|Thông tin phòng khám được tạo mới, cập nhật hoặc xóa trong hệ thống|
-|Luồng hoạt động|1. Admin truy cập chức năng **Quản lý phòng khám**. <br> 2. Hệ thống hiển thị danh sách phòng khám hiện có. <br> 3. Admin chọn môt trong những thao tác **Thêm, Sửa và Xóa** phòng khám. <br> 4. Nếu chọn **Thêm**, Admin nhập thông tin phòng khám. <br> 5. Nếu chọn **Sửa**, Admin cập nhật thông tin phòng khám. <br> 6. Nếu chọn **Xóa**, hệ thống yêu cầu xác nhận. <br> 7. Hệ thống lưu thay đổi và hiển thị thông báo thành công.|
-|Luồng thay thế|A1 - Thông tin không hợp lệ <br> Nếu dữ liệu nhập vào không hợp lệ, hệ thống hiển thị thông báo lỗi và yêu cầu nhập lại.|
-|Luồng ngoại lệ|E1 - Lỗi hệ thống <br> Nếu hệ thống không thể lưu dữ liệu, hiển thị thông báo lỗi và yêu cầu thử lại.|
+| Use case ID | UC03 |
+| Actor chính | Admin |
+
+### Pre-conditions
+
+-   Admin đăng nhập
+    
+
+### Post-conditions
+
+-   Phòng khám được tạo/sửa/disable
+    
+
+### Business Rules
+
+-   Không xóa phòng khám đã có dữ liệu
+    
+-   Dùng disable thay vì delete
+    
+-   Clinic phải unique
+    
+
+### Main Flow
+
+1.  Admin mở màn hình quản lý
+    
+2.  Chọn thêm/sửa/xóa
+    
+3.  Nhập dữ liệu
+    
+4.  Validate
+    
+5.  Lưu
+    
+
+### Alternative Flow
+
+A1 - Dữ liệu không hợp lệ  
+→ Yêu cầu nhập lại
+
+### Exception Flow
+
+E1 - Lỗi hệ thống  
+→ Hiển thị lỗi
+
+----------
+
+## 6. ĐẶC TẢ LUỒNG NGHIỆP VỤ – PET CARE (Business Flow Specifications)
+
+----------
+
+## 1. Luồng Đặt Lịch Khám/Grooming (Appointment Booking Flow)
+
+**Mục tiêu:** Cho phép chủ thú cưng đặt lịch khám/grooming tại phòng khám phù hợp với thời gian mong muốn.
+
+### Bước 1 (Frontend)
+
+Người dùng nhập/chọn:
+
+-   Thú cưng
+    
+-   Loại dịch vụ (khám, tiêm, grooming…)
+    
+-   Phòng khám
+    
+-   Ngày và khung giờ
+    
+-   Ghi chú (triệu chứng nếu có)
+    
+
+----------
+
+### Bước 2 (API)
+
+Frontend gọi API:
+
+```http
+POST /api/appointments
+
+```
+
+Payload:
+
+```json
+{
+  "petId": "...",
+  "serviceId": "...",
+  "clinicId": "...",
+  "datetime": "...",
+  "note": "..."
+}
+
+```
+
+----------
+
+### Bước 3 (Backend)
+
+-   Kiểm tra petId thuộc user hiện tại
+    
+-   Kiểm tra phòng khám đang hoạt động
+    
+-   Kiểm tra dịch vụ hợp lệ tại phòng khám
+    
+-   Kiểm tra khung giờ:
+    
+    -   Không nằm ngoài giờ làm việc
+        
+    -   Không bị trùng với booking khác
+        
+    -   Slot còn trống
+        
+-   Xác định trạng thái:
+    
+    -   `PENDING` (nếu cần xác nhận)
+        
+    -   hoặc `CONFIRMED` (auto confirm)
+        
+
+----------
+
+### Bước 4 (Kết quả)
+
+-   Tạo bản ghi Appointment
+    
+-   Trả về thông tin lịch hẹn
+    
+-   Gửi thông báo cho:
+    
+    -   Chủ thú cưng
+        
+    -   Phòng khám
+        
+
+----------
+
+## 2. Luồng Check-in tại Phòng Khám (Check-in Flow)
+
+**Mục tiêu:** Xác nhận thú cưng đã đến phòng khám và bắt đầu quá trình khám/chăm sóc.
+
+### Bước 1 (Frontend)
+
+Nhân viên:
+
+-   Mở danh sách lịch hẹn trong ngày
+    
+-   Chọn lịch hẹn tương ứng
+    
+
+----------
+
+### Bước 2 (API)
+
+```http
+POST /api/appointments/{id}/check-in
+
+```
+
+----------
+
+### Bước 3 (Backend)
+
+-   Kiểm tra appointment tồn tại
+    
+-   Kiểm tra trạng thái phải là `CONFIRMED`
+    
+-   Kiểm tra chưa bị hủy
+    
+-   Ghi nhận thời gian check-in
+    
+-   Cập nhật trạng thái → `CHECKED_IN`
+    
+
+----------
+
+### Bước 4 (Kết quả)
+
+-   Trả về appointment đã cập nhật
+    
+-   Cho phép chuyển sang trạng thái `IN_PROGRESS`
+    
+
+----------
+
+## 3. Luồng Tạo Bệnh Án (Medical Record Flow)
+
+**Mục tiêu:** Lưu thông tin khám, chẩn đoán và điều trị cho thú cưng.
+
+### Bước 1 (Frontend)
+
+Bác sĩ:
+
+-   Mở hồ sơ từ lịch đã check-in
+    
+-   Nhập:
+    
+    -   Triệu chứng
+        
+    -   Chẩn đoán
+        
+    -   Hướng điều trị
+        
+    -   Ghi chú
+        
+
+----------
+
+### Bước 2 (API)
+
+```http
+POST /api/medical-records
+
+```
+
+Payload:
+
+```json
+{
+  "petId": "...",
+  "appointmentId": "...",
+  "symptoms": "...",
+  "diagnosis": "...",
+  "treatment": "...",
+  "note": "..."
+}
+
+```
+
+----------
+
+### Bước 3 (Backend)
+
+-   Kiểm tra quyền bác sĩ
+    
+-   Kiểm tra appointment hợp lệ
+    
+-   Gắn record với pet + appointment
+    
+-   Lưu lịch sử khám
+    
+-   Set trạng thái:
+    
+    -   `OPEN`
+        
+    -   hoặc `FOLLOW_UP_REQUIRED`
+        
+
+----------
+
+### Bước 4 (Kết quả)
+
+-   Trả về medical record
+    
+-   Cho phép tiếp tục kê đơn thuốc
+    
+
+----------
+
+## 4. Luồng Thanh Toán (Payment Flow)
+
+**Mục tiêu:** Xử lý thanh toán dịch vụ khám/grooming hoặc đơn thuốc.
+
+### Bước 1 (Frontend)
+
+Người dùng:
+
+-   Chọn lịch hẹn hoặc hóa đơn
+    
+-   Chọn phương thức thanh toán
+    
+
+----------
+
+### Bước 2 (API)
+
+```http
+POST /api/payments
+
+```
+
+Payload:
+
+```json
+{
+  "appointmentId": "...",
+  "amount": 500000,
+  "method": "ONLINE"
+}
+
+```
+
+----------
+
+### Bước 3 (Backend)
+
+-   Kiểm tra giao dịch hợp lệ
+    
+-   Kiểm tra chưa thanh toán
+    
+-   Gửi request tới payment gateway
+    
+-   Nhận callback:
+    
+    -   Success → `PAID`
+        
+    -   Fail → `FAILED`
+        
+
+----------
+
+### Bước 4 (Kết quả)
+
+-   Cập nhật trạng thái payment
+    
+-   Tạo hóa đơn
+    
+-   Gửi thông báo cho user
+    
+
+----------
