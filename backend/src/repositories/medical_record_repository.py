@@ -28,6 +28,12 @@ class MedicalRecordRepository:
         ).order_by("-created_at")
 
     @staticmethod
+    def get_by_pet_id(pet_id: int):
+        return MedicalRecord.objects.select_related(
+            "appointment", "pet", "clinic", "staff"
+        ).filter(pet_id=pet_id).order_by("-created_at")
+
+    @staticmethod
     def save(record: MedicalRecord):
         record.save()
         return record

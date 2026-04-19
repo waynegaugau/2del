@@ -9,6 +9,8 @@ from src.common.exceptions import (
     PermissionDeniedException,
     UnauthorizedException,
 )
+from src.models import User
+from src.repositories.clinic_repository import ClinicRepository
 from src.repositories.user_repository import UserRepository
 
 
@@ -22,7 +24,7 @@ class UserService:
             with transaction.atomic():
                 return UserRepository.create_user(password=password, **user_data)
         except IntegrityError as exc:
-            raise BadRequestException("Ten dang nhap hoac email da ton tai.") from exc
+            raise BadRequestException("Tên đăng nhập hoặc email đã tồn tại.") from exc
 
     @staticmethod
     def login(validated_data):
@@ -31,10 +33,10 @@ class UserService:
         user = authenticate(username=username, password=password)
 
         if not user:
-            raise UnauthorizedException("Ten dang nhap hoac mat khau khong chinh xac.")
+            raise UnauthorizedException("Tên đăng nhập hoặc mật khẩu không chính xác.")
 
         if not user.is_active:
-            raise UnauthorizedException("Tai khoan da bi khoa.")
+            raise UnauthorizedException("Tài khoản đã bị khóa.")
 
         refresh = RefreshToken.for_user(user)
         return {
@@ -49,11 +51,11 @@ class UserService:
             token = RefreshToken(refresh_token)
 
             if str(token["user_id"]) != str(user_id):
-                raise PermissionDeniedException("Ban khong the dang xuat phien cua nguoi dung khac.")
+                raise PermissionDeniedException("Bạn không thể đăng xuất phiên của người dùng khác.")
 
             token.blacklist()
         except TokenError as exc:
-            raise BadRequestException("Refresh token khong hop le hoac da het han.") from exc
+            raise BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn.") from exc
 
     @staticmethod
     def refresh_access_token(refresh_token: str):
@@ -61,22 +63,85 @@ class UserService:
             token = RefreshToken(refresh_token)
             return {"access": str(token.access_token)}
         except TokenError as exc:
-            raise BadRequestException("Refresh token khong hop le hoac da het han.") from exc
+            raise BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn.") from exc
 
     @staticmethod
     def get_profile(user_id: int):
         user = UserRepository.get_by_id(user_id)
         if not user:
-            raise NotFoundException("Khong tim thay nguoi dung.")
+            raise NotFoundException("Không tìm thấy người dùng.")
         return user
 
     @staticmethod
     def update_profile(user_id: int, data):
         user = UserRepository.get_by_id(user_id)
         if not user:
-            raise NotFoundException("Khong tim thay nguoi dung.")
+            raise NotFoundException("Không tìm thấy người dùng.")
 
         user.full_name = data.get("full_name", user.full_name)
         user.phone = data.get("phone", user.phone)
         user.address = data.get("address", user.address)
+        return UserRepository.save(user)
+
+    @staticmethod
+    def get_staff_list(clinic_id=None, is_active=None):
+        return UserRepository.get_staff_list(clinic_id=clinic_id, is_active=is_active)
+
+    @staticmethod
+    def create_staff(validated_data):
+        clinic = ClinicRepository.get_by_id(validated_data["clinic_id"])
+        if not clinic:
+            raise NotFoundException("Không tìm thấy phòng khám.")
+
+        user_data = validated_data.copy()
+        password = user_data.pop("password")
+        user_data["clinic"] = clinic
+        user_data["role"] = User.ROLE_CLINIC_STAFF
+        user_data.pop("clinic_id", None)
+
+        try:
+            with transaction.atomic():
+                return UserRepository.create_user(password=password, **user_data)
+        except IntegrityError as exc:
+            raise BadRequestException("Tên đăng nhập hoặc email đã tồn tại.") from exc
+
+    @staticmethod
+    def get_staff_detail(staff_id: int):
+        user = UserRepository.get_by_id(staff_id)
+        if not user or user.role != User.ROLE_CLINIC_STAFF:
+            raise NotFoundException("Không tìm thấy nhân viên.")
+        return user
+
+    @staticmethod
+    def update_staff(staff_id: int, validated_data):
+        user = UserService.get_staff_detail(staff_id)
+
+        if "email" in validated_data:
+            existing_user = UserRepository.get_by_email(validated_data["email"])
+            if existing_user and existing_user.id != user.id:
+                raise BadRequestException("Email đã tồn tại.")
+            user.email = validated_data["email"]
+
+        if "full_name" in validated_data:
+            user.full_name = validated_data["full_name"]
+        if "phone" in validated_data:
+            user.phone = validated_data["phone"]
+        if "address" in validated_data:
+            user.address = validated_data["address"]
+        if "is_active" in validated_data:
+            user.is_active = validated_data["is_active"]
+        if "clinic_id" in validated_data:
+            clinic = ClinicRepository.get_by_id(validated_data["clinic_id"])
+            if not clinic:
+                raise NotFoundException("Không tìm thấy phòng khám.")
+            user.clinic = clinic
+        if "password" in validated_data:
+            user.set_password(validated_data["password"])
+
+        return UserRepository.save(user)
+
+    @staticmethod
+    def delete_staff(staff_id: int):
+        user = UserService.get_staff_detail(staff_id)
+        user.is_active = False
         return UserRepository.save(user)

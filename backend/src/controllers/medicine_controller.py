@@ -18,7 +18,7 @@ class MedicineListCreateAPIView(APIView):
         status_filter = request.query_params.get("status", "active")
         medicines = MedicineService.get_clinic_medicines(request.user, status=status_filter)
         serializer = MedicineSerializer(medicines, many=True)
-        return success_response(serializer.data, "Lay danh sach thuoc thanh cong")
+        return success_response(serializer.data, "Lấy danh sách thuốc thành công")
 
     def post(self, request):
         serializer = MedicineCreateSerializer(data=request.data)
@@ -28,7 +28,7 @@ class MedicineListCreateAPIView(APIView):
         output = MedicineSerializer(medicine)
         return success_response(
             output.data,
-            "Tao thuoc thanh cong",
+            "Tạo thuốc thành công",
             status.HTTP_201_CREATED,
         )
 
@@ -39,7 +39,7 @@ class MedicineDetailAPIView(APIView):
     def get(self, request, medicine_id):
         medicine = MedicineService.get_medicine_detail(request.user, medicine_id)
         serializer = MedicineSerializer(medicine)
-        return success_response(serializer.data, "Lay chi tiet thuoc thanh cong")
+        return success_response(serializer.data, "Lấy chi tiết thuốc thành công")
 
     def put(self, request, medicine_id):
         serializer = MedicineUpdateSerializer(data=request.data)
@@ -51,9 +51,9 @@ class MedicineDetailAPIView(APIView):
             serializer.validated_data,
         )
         output = MedicineSerializer(medicine)
-        return success_response(output.data, "Cap nhat thuoc thanh cong")
+        return success_response(output.data, "Cập nhật thuốc thành công")
 
     def delete(self, request, medicine_id):
         medicine = MedicineService.delete_medicine(request.user, medicine_id)
         output = MedicineSerializer(medicine)
-        return success_response(output.data, "Xoa thuoc thanh cong")
+        return success_response(output.data, "Xóa thuốc thành công")

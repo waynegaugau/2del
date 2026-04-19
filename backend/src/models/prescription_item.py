@@ -23,6 +23,8 @@ class PrescriptionItem(TimeStampedModel):
     class Meta:
         db_table = "prescription_items"
         ordering = ["id"]
+        verbose_name = "Chi tiết đơn thuốc"
+        verbose_name_plural = "Chi tiết đơn thuốc"
 
     def __str__(self):
         return f"{self.medicine.name} - Prescription #{self.prescription_id}"

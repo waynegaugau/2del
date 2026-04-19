@@ -3,8 +3,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from src.common.exceptions import BadRequestException
+from src.common.permissions import IsAdminUserRole
 from src.common.responses import success_response
 from src.serializers.user_serializer import (
+    AdminStaffCreateSerializer,
+    AdminStaffUpdateSerializer,
     LoginSerializer,
     LogoutSerializer,
     RefreshTokenSerializer,
@@ -26,7 +30,7 @@ class RegisterAPIView(APIView):
         output = UserSerializer(user)
         return success_response(
             data=output.data,
-            message="Dang ky thanh cong.",
+            message="Đăng ký thành công.",
             status_code=status.HTTP_201_CREATED,
         )
 
@@ -47,7 +51,7 @@ class LoginAPIView(APIView):
                 "access_token": result["access"],
                 "refresh_token": result["refresh"],
             },
-            message="Dang nhap thanh cong.",
+            message="Đăng nhập thành công.",
             status_code=status.HTTP_200_OK,
         )
 
@@ -62,7 +66,7 @@ class RefreshTokenAPIView(APIView):
         result = UserService.refresh_access_token(serializer.validated_data["refresh_token"])
         return success_response(
             data={"access_token": result["access"]},
-            message="Lam moi access token thanh cong.",
+            message="Làm mới access token thành công.",
             status_code=status.HTTP_200_OK,
         )
 
@@ -78,7 +82,7 @@ class LogoutAPIView(APIView):
         UserService.logout_user(request.user.id, serializer.validated_data["refresh_token"])
         return success_response(
             data=None,
-            message="Dang xuat thanh cong.",
+            message="Đăng xuất thành công.",
             status_code=status.HTTP_200_OK,
         )
 
@@ -92,7 +96,7 @@ class ProfileAPIView(APIView):
         serializer = UserSerializer(user)
         return success_response(
             data=serializer.data,
-            message="Lay thong tin ca nhan thanh cong.",
+            message="Lấy thông tin cá nhân thành công.",
             status_code=status.HTTP_200_OK,
         )
 
@@ -104,6 +108,69 @@ class ProfileAPIView(APIView):
         output = UserSerializer(user)
         return success_response(
             data=output.data,
-            message="Cap nhat ho so thanh cong.",
+            message="Cập nhật hồ sơ thành công.",
             status_code=status.HTTP_200_OK,
         )
+
+
+class StaffAdminListCreateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserRole]
+
+    def get(self, request):
+        clinic_id = request.query_params.get("clinic_id")
+        is_active_param = request.query_params.get("is_active")
+
+        parsed_clinic_id = None
+        if clinic_id:
+            try:
+                parsed_clinic_id = int(clinic_id)
+            except ValueError as exc:
+                raise BadRequestException("clinic_id phải là số nguyên hợp lệ.") from exc
+
+        parsed_is_active = None
+        if is_active_param is not None:
+            parsed_is_active = is_active_param.strip().lower() in {"1", "true", "yes"}
+
+        staff_list = UserService.get_staff_list(
+            clinic_id=parsed_clinic_id,
+            is_active=parsed_is_active,
+        )
+        serializer = UserSerializer(staff_list, many=True)
+        return success_response(serializer.data, "Lấy danh sách nhân viên thành công.")
+
+    def post(self, request):
+        serializer = AdminStaffCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        staff = UserService.create_staff(serializer.validated_data)
+        output = UserSerializer(staff)
+        return success_response(
+            output.data,
+            "Tạo nhân viên thành công.",
+            status.HTTP_201_CREATED,
+        )
+
+
+class StaffAdminDetailAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserRole]
+
+    def get(self, request, staff_id):
+        staff = UserService.get_staff_detail(staff_id)
+        serializer = UserSerializer(staff)
+        return success_response(serializer.data, "Lấy chi tiết nhân viên thành công.")
+
+    def put(self, request, staff_id):
+        staff = UserService.get_staff_detail(staff_id)
+        serializer = AdminStaffUpdateSerializer(staff, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        staff = UserService.update_staff(staff_id, serializer.validated_data)
+        output = UserSerializer(staff)
+        return success_response(output.data, "Cập nhật nhân viên thành công.")
+
+    def delete(self, request, staff_id):
+        staff = UserService.delete_staff(staff_id)
+        output = UserSerializer(staff)
+        return success_response(output.data, "Khóa nhân viên thành công.")

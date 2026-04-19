@@ -41,13 +41,13 @@ class MedicineCreateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten thuoc khong duoc de trong.")
+            raise serializers.ValidationError("Tên thuốc không được để trống.")
         return value
 
     def validate_unit(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Don vi thuoc khong duoc de trong.")
+            raise serializers.ValidationError("Đơn vị thuốc không được để trống.")
         return value
 
 
@@ -62,11 +62,11 @@ class MedicineUpdateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten thuoc khong duoc de trong.")
+            raise serializers.ValidationError("Tên thuốc không được để trống.")
         return value
 
     def validate_unit(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Don vi thuoc khong duoc de trong.")
+            raise serializers.ValidationError("Đơn vị thuốc không được để trống.")
         return value

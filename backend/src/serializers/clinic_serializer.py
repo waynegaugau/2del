@@ -1,8 +1,8 @@
 from rest_framework import serializers
+
 from src.models import Clinic, Service
 
 
-# Clinic Serializers
 class ClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clinic
@@ -27,13 +27,13 @@ class ClinicCreateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten phong kham khong duoc de trong.")
+            raise serializers.ValidationError("Tên phòng khám không được để trống.")
         return value
 
     def validate_address(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Dia chi khong duoc de trong.")
+            raise serializers.ValidationError("Địa chỉ không được để trống.")
         return value
 
 
@@ -47,17 +47,16 @@ class ClinicUpdateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten phong kham khong duoc de trong.")
+            raise serializers.ValidationError("Tên phòng khám không được để trống.")
         return value
 
     def validate_address(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Dia chi khong duoc de trong.")
+            raise serializers.ValidationError("Địa chỉ không được để trống.")
         return value
 
 
-# Service Serializers
 class ServiceSerializer(serializers.ModelSerializer):
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
 
@@ -89,17 +88,17 @@ class ServiceCreateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten dich vu khong duoc de trong.")
+            raise serializers.ValidationError("Tên dịch vụ không được để trống.")
         return value
 
     def validate_price(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Gia dich vu phai lon hon 0.")
+            raise serializers.ValidationError("Giá dịch vụ phải lớn hơn 0.")
         return value
 
     def validate_duration_minutes(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Thoi luong dich vu phai lon hon 0.")
+            raise serializers.ValidationError("Thời lượng dịch vụ phải lớn hơn 0.")
         return value
 
 
@@ -114,15 +113,15 @@ class ServiceUpdateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten dich vu khong duoc de trong.")
+            raise serializers.ValidationError("Tên dịch vụ không được để trống.")
         return value
 
     def validate_price(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Gia dich vu phai lon hon 0.")
+            raise serializers.ValidationError("Giá dịch vụ phải lớn hơn 0.")
         return value
 
     def validate_duration_minutes(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Thoi luong dich vu phai lon hon 0.")
+            raise serializers.ValidationError("Thời lượng dịch vụ phải lớn hơn 0.")
         return value

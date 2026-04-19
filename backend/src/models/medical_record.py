@@ -33,6 +33,8 @@ class MedicalRecord(TimeStampedModel):
     class Meta:
         db_table = "medical_records"
         ordering = ["-created_at"]
+        verbose_name = "Hồ sơ bệnh án"
+        verbose_name_plural = "Hồ sơ bệnh án"
 
     def __str__(self):
         return f"Medical record #{self.id} - Appointment #{self.appointment_id}"

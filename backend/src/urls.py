@@ -5,6 +5,8 @@ from src.controllers.user_controller import (
     LogoutAPIView,
     ProfileAPIView,
     RefreshTokenAPIView,
+    StaffAdminDetailAPIView,
+    StaffAdminListCreateAPIView,
 )
 from src.controllers.appointment_controller import (
     AppointmentListCreateAPIView,
@@ -25,6 +27,8 @@ from src.controllers.medical_record_controller import (
     AppointmentMedicalRecordAPIView,
     MedicalRecordDetailAPIView,
     PetMedicalRecordListAPIView,
+    PetOwnerMedicalRecordListAPIView,
+    PetOwnerMedicalRecordDetailAPIView,
 )
 from src.controllers.medicine_controller import (
     MedicineListCreateAPIView,
@@ -35,6 +39,7 @@ from src.controllers.prescription_controller import (
     PrescriptionDetailAPIView,
     PrescriptionItemListCreateAPIView,
     PrescriptionItemDetailAPIView,
+    PetOwnerMedicalRecordPrescriptionAPIView,
 )
 from src.controllers.clinic_controller import (
     ClinicListCreateAPIView,
@@ -50,6 +55,8 @@ urlpatterns = [
     path("auth/refresh/", RefreshTokenAPIView.as_view(), name="token-refresh"),
     path("auth/logout/", LogoutAPIView.as_view(), name="logout"),
     path("auth/profile/", ProfileAPIView.as_view(), name="profile"),
+    path("admin/staffs/", StaffAdminListCreateAPIView.as_view(), name="admin-staff-list-create"),
+    path("admin/staffs/<int:staff_id>/", StaffAdminDetailAPIView.as_view(), name="admin-staff-detail"),
 
     # Pets
     path("pets/", PetListCreateAPIView.as_view(), name="pet-list-create"),
@@ -79,6 +86,8 @@ urlpatterns = [
     path("appointments/<int:appointment_id>/medical-record/", AppointmentMedicalRecordAPIView.as_view(), name="appointment-medical-record"),
     path("medical-records/<int:record_id>/", MedicalRecordDetailAPIView.as_view(), name="medical-record-detail"),
     path("pets/<int:pet_id>/medical-records/", PetMedicalRecordListAPIView.as_view(), name="pet-medical-record-list"),
+    path("owner/pets/<int:pet_id>/medical-records/", PetOwnerMedicalRecordListAPIView.as_view(), name="owner-pet-medical-record-list"),
+    path("owner/medical-records/<int:record_id>/", PetOwnerMedicalRecordDetailAPIView.as_view(), name="owner-medical-record-detail"),
 
     # Medicines
     path("medicines/", MedicineListCreateAPIView.as_view(), name="medicine-list-create"),
@@ -89,4 +98,5 @@ urlpatterns = [
     path("prescriptions/<int:prescription_id>/", PrescriptionDetailAPIView.as_view(), name="prescription-detail"),
     path("prescriptions/<int:prescription_id>/items/", PrescriptionItemListCreateAPIView.as_view(), name="prescription-item-list-create"),
     path("prescription-items/<int:item_id>/", PrescriptionItemDetailAPIView.as_view(), name="prescription-item-detail"),
+    path("owner/medical-records/<int:medical_record_id>/prescription/", PetOwnerMedicalRecordPrescriptionAPIView.as_view(), name="owner-medical-record-prescription"),
 ]

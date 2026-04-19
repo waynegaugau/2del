@@ -39,17 +39,17 @@ class PetCreateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten thu cung khong duoc de trong.")
+            raise serializers.ValidationError("Tên thú cưng không được để trống.")
         return value
 
     def validate_birth_date(self, value):
         if value > date.today():
-            raise serializers.ValidationError("Ngay sinh khong duoc lon hon ngay hien tai.")
+            raise serializers.ValidationError("Ngày sinh không được lớn hơn ngày hiện tại.")
         return value
 
     def validate_weight(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Can nang phai lon hon 0.")
+            raise serializers.ValidationError("Cân nặng phải lớn hơn 0.")
         return value
 
 
@@ -65,15 +65,15 @@ class PetUpdateSerializer(serializers.Serializer):
     def validate_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Ten thu cung khong duoc de trong.")
+            raise serializers.ValidationError("Tên thú cưng không được để trống.")
         return value
 
     def validate_birth_date(self, value):
         if value > date.today():
-            raise serializers.ValidationError("Ngay sinh khong duoc lon hon ngay hien tai.")
+            raise serializers.ValidationError("Ngày sinh không được lớn hơn ngày hiện tại.")
         return value
 
     def validate_weight(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Can nang phai lon hon 0.")
+            raise serializers.ValidationError("Cân nặng phải lớn hơn 0.")
         return value

@@ -20,6 +20,8 @@ class Medicine(TimeStampedModel):
         db_table = "medicines"
         ordering = ["name"]
         unique_together = ("clinic", "name")
+        verbose_name = "Thuốc"
+        verbose_name_plural = "Thuốc"
 
     def __str__(self):
         return f"{self.name} - {self.clinic.name}"

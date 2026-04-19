@@ -1,10 +1,8 @@
-from src.models import Clinic, Service
+from src.common.exceptions import BusinessException, NotFoundException
 from src.repositories.clinic_repository import ClinicRepository, ServiceRepository
-from src.common.exceptions import NotFoundException, BusinessException
 
 
 class ClinicService:
-
     @staticmethod
     def create_clinic(data):
         return ClinicRepository.create(
@@ -17,7 +15,7 @@ class ClinicService:
 
     @staticmethod
     def get_all_clinics():
-        # chỉ trả clinic đang active
+        # Chỉ trả về phòng khám đang hoạt động.
         return ClinicRepository.get_all().filter(is_active=True)
 
     @staticmethod
@@ -27,7 +25,7 @@ class ClinicService:
             raise NotFoundException("Không tìm thấy phòng khám.")
 
         if not clinic.is_active:
-            raise BusinessException("Phòng khám đang ngưng hoạt động.")
+            raise BusinessException("Phòng khám đang ngừng hoạt động.")
 
         return clinic
 
@@ -48,13 +46,12 @@ class ClinicService:
         if not clinic:
             raise NotFoundException("Không tìm thấy phòng khám.")
 
-        # không xóa cứng → soft delete
+        # Không xóa cứng, chỉ soft delete.
         clinic.is_active = False
         return ClinicRepository.save(clinic)
 
 
 class ServiceService:
-
     @staticmethod
     def create_service(data):
         clinic = ClinicRepository.get_by_id(data["clinic_id"])
@@ -62,7 +59,7 @@ class ServiceService:
             raise NotFoundException("Không tìm thấy phòng khám.")
 
         if not clinic.is_active:
-            raise BusinessException("Không thể tạo dịch vụ cho phòng khám đang ngưng hoạt động.")
+            raise BusinessException("Không thể tạo dịch vụ cho phòng khám đang ngừng hoạt động.")
 
         return ServiceRepository.create(
             clinic=clinic,
@@ -81,7 +78,7 @@ class ServiceService:
             raise NotFoundException("Không tìm thấy phòng khám.")
 
         if not clinic.is_active:
-            raise BusinessException("Phòng khám đang ngưng hoạt động.")
+            raise BusinessException("Phòng khám đang ngừng hoạt động.")
 
         return ServiceRepository.get_by_clinic(clinic).filter(is_active=True)
 
@@ -92,7 +89,7 @@ class ServiceService:
             raise NotFoundException("Không tìm thấy dịch vụ.")
 
         if not service.clinic.is_active:
-            raise BusinessException("Không thể cập nhật dịch vụ của phòng khám đã ngưng hoạt động.")
+            raise BusinessException("Không thể cập nhật dịch vụ của phòng khám đã ngừng hoạt động.")
 
         for field, value in data.items():
             setattr(service, field, value)
@@ -105,6 +102,6 @@ class ServiceService:
         if not service:
             raise NotFoundException("Không tìm thấy dịch vụ.")
 
-        # không xóa cứng → soft delete
+        # Không xóa cứng, chỉ soft delete.
         service.is_active = False
         return ServiceRepository.save(service)
