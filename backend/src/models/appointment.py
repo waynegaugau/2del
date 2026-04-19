@@ -50,5 +50,10 @@ class Appointment(TimeStampedModel):
         default=STATUS_PENDING
     )
 
+    class Meta:
+        db_table = "appointments"
+        verbose_name = "Lịch hẹn"
+        verbose_name_plural = "Lịch hẹn"
+
     def __str__(self):
         return f"Appointment #{self.id} - {self.pet.name}"

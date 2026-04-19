@@ -36,5 +36,10 @@ class Pet(TimeStampedModel):
     note = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = "pets"
+        verbose_name = "Thú cưng"
+        verbose_name_plural = "Thú cưng"
+
     def __str__(self):
         return self.name

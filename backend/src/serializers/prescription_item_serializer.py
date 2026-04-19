@@ -44,13 +44,13 @@ class PrescriptionItemCreateSerializer(serializers.Serializer):
     def validate_dosage(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Lieu dung khong duoc de trong.")
+            raise serializers.ValidationError("Liều dùng không được để trống.")
         return value
 
     def validate_frequency(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Tan suat su dung khong duoc de trong.")
+            raise serializers.ValidationError("Tần suất sử dụng không được để trống.")
         return value
 
 
@@ -64,11 +64,11 @@ class PrescriptionItemUpdateSerializer(serializers.Serializer):
     def validate_dosage(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Lieu dung khong duoc de trong.")
+            raise serializers.ValidationError("Liều dùng không được để trống.")
         return value
 
     def validate_frequency(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Tan suat su dung khong duoc de trong.")
+            raise serializers.ValidationError("Tần suất sử dụng không được để trống.")
         return value

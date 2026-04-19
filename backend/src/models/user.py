@@ -1,6 +1,6 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from src.common.base_model import TimeStampedModel
 
@@ -42,9 +42,9 @@ class User(AbstractUser, TimeStampedModel):
     ROLE_ADMIN = "ADMIN"
 
     ROLE_CHOICES = [
-        (ROLE_PET_OWNER, "Pet Owner"),
-        (ROLE_CLINIC_STAFF, "Clinic Staff"),
-        (ROLE_ADMIN, "Admin"),
+        (ROLE_PET_OWNER, "Chủ thú cưng"),
+        (ROLE_CLINIC_STAFF, "Nhân viên phòng khám"),
+        (ROLE_ADMIN, "Quản trị viên"),
     ]
 
     full_name = models.CharField(max_length=255, verbose_name="Họ và tên")
@@ -56,7 +56,7 @@ class User(AbstractUser, TimeStampedModel):
         max_length=20,
         choices=ROLE_CHOICES,
         default=ROLE_PET_OWNER,
-        verbose_name="Vai trò"
+        verbose_name="Vai trò",
     )
 
     clinic = models.ForeignKey(
@@ -65,7 +65,7 @@ class User(AbstractUser, TimeStampedModel):
         null=True,
         blank=True,
         related_name="staff_users",
-        verbose_name="Phòng khám"
+        verbose_name="Phòng khám",
     )
 
     REQUIRED_FIELDS = ["email", "full_name"]
@@ -81,14 +81,14 @@ class User(AbstractUser, TimeStampedModel):
         super().clean()
 
         if self.role == self.ROLE_CLINIC_STAFF and not self.clinic:
-            raise ValidationError({
-                "clinic": "Nhân viên phòng khám bắt buộc phải thuộc một phòng khám."
-            })
+            raise ValidationError(
+                {"clinic": "Nhân viên phòng khám bắt buộc phải thuộc một phòng khám."}
+            )
 
         if self.role in [self.ROLE_PET_OWNER, self.ROLE_ADMIN] and self.clinic is not None:
-            raise ValidationError({
-                "clinic": "Chỉ nhân viên phòng khám mới được phép thuộc một phòng khám."
-            })
+            raise ValidationError(
+                {"clinic": "Chỉ nhân viên phòng khám mới được phép thuộc một phòng khám."}
+            )
 
         if self.role == self.ROLE_ADMIN:
             self.is_staff = True
@@ -103,3 +103,10 @@ class User(AbstractUser, TimeStampedModel):
 
     def __str__(self):
         return f"{self.username} - {self.role}"
+
+
+class StaffUser(User):
+    class Meta:
+        proxy = True
+        verbose_name = "Nhân viên phòng khám"
+        verbose_name_plural = "Nhân viên phòng khám"

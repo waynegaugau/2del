@@ -1,9 +1,9 @@
-from src.repositories.medicine_repository import MedicineRepository
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
     PermissionDeniedException,
 )
+from src.repositories.medicine_repository import MedicineRepository
 
 
 class MedicineService:
@@ -14,7 +14,7 @@ class MedicineService:
     @staticmethod
     def _get_staff_clinic_id(user):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
         return user.clinic_id
 
     @staticmethod
@@ -30,7 +30,7 @@ class MedicineService:
         if normalized_status == MedicineService.STATUS_ALL:
             return None
 
-        raise BusinessException("Status thuoc khong hop le. Chi chap nhan active, inactive hoac all.")
+        raise BusinessException("Status thuốc không hợp lệ. Chỉ chấp nhận active, inactive hoặc all.")
 
     @staticmethod
     def _get_staff_clinic_medicine(user, medicine_id):
@@ -38,10 +38,10 @@ class MedicineService:
 
         medicine = MedicineRepository.get_by_id(medicine_id)
         if not medicine:
-            raise NotFoundException("Khong tim thay thuoc.")
+            raise NotFoundException("Không tìm thấy thuốc.")
 
         if medicine.clinic_id != clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen thao tac thuoc cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền thao tác thuốc của phòng khám khác.")
 
         return medicine
 
@@ -63,7 +63,7 @@ class MedicineService:
         existing_medicine = MedicineRepository.get_by_clinic_id_and_name(clinic_id, medicine_name)
         if existing_medicine:
             if existing_medicine.is_active:
-                raise BusinessException("Thuoc nay da ton tai trong phong kham.")
+                raise BusinessException("Thuốc này đã tồn tại trong phòng khám.")
 
             existing_medicine.unit = data["unit"].strip()
             existing_medicine.description = data.get("description", "")
@@ -91,8 +91,10 @@ class MedicineService:
             existing_medicine = MedicineRepository.get_by_clinic_id_and_name(medicine.clinic_id, new_name)
             if existing_medicine and existing_medicine.id != medicine.id:
                 if existing_medicine.is_active:
-                    raise BusinessException("Thuoc nay da ton tai trong phong kham.")
-                raise BusinessException("Ten thuoc nay dang thuoc ve mot thuoc da ngung hoat dong. Hay kich hoat lai thuoc do thay vi doi ten.")
+                    raise BusinessException("Thuốc này đã tồn tại trong phòng khám.")
+                raise BusinessException(
+                    "Tên thuốc này đang thuộc về một thuốc đã ngừng hoạt động. Hãy kích hoạt lại thuốc đó thay vì đổi tên."
+                )
             medicine.name = new_name
 
         if "unit" in data:

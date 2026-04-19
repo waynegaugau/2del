@@ -1,19 +1,19 @@
-from src.repositories.medical_record_repository import MedicalRecordRepository
-from src.repositories.medicine_repository import MedicineRepository
-from src.repositories.prescription_item_repository import PrescriptionItemRepository
-from src.repositories.prescription_repository import PrescriptionRepository
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
     PermissionDeniedException,
 )
+from src.repositories.medical_record_repository import MedicalRecordRepository
+from src.repositories.medicine_repository import MedicineRepository
+from src.repositories.prescription_item_repository import PrescriptionItemRepository
+from src.repositories.prescription_repository import PrescriptionRepository
 
 
 class PrescriptionService:
     @staticmethod
     def _get_staff_clinic_id(user):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
         return user.clinic_id
 
     @staticmethod
@@ -22,10 +22,10 @@ class PrescriptionService:
 
         record = MedicalRecordRepository.get_by_id(medical_record_id)
         if not record:
-            raise NotFoundException("Khong tim thay ho so benh an.")
+            raise NotFoundException("Không tìm thấy hồ sơ bệnh án.")
 
         if record.clinic_id != clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen thao tac don thuoc cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền thao tác đơn thuốc của phòng khám khác.")
 
         return record
 
@@ -35,10 +35,10 @@ class PrescriptionService:
 
         prescription = PrescriptionRepository.get_by_id(prescription_id)
         if not prescription:
-            raise NotFoundException("Khong tim thay don thuoc.")
+            raise NotFoundException("Không tìm thấy đơn thuốc.")
 
         if prescription.clinic_id != clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen thao tac don thuoc cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền thao tác đơn thuốc của phòng khám khác.")
 
         return prescription
 
@@ -48,13 +48,13 @@ class PrescriptionService:
 
         medicine = MedicineRepository.get_by_id(medicine_id)
         if not medicine:
-            raise NotFoundException("Khong tim thay thuoc.")
+            raise NotFoundException("Không tìm thấy thuốc.")
 
         if medicine.clinic_id != clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen su dung thuoc cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền sử dụng thuốc của phòng khám khác.")
 
         if not medicine.is_active:
-            raise BusinessException("Thuoc nay da ngung hoat dong.")
+            raise BusinessException("Thuốc này đã ngừng hoạt động.")
 
         return medicine
 
@@ -64,7 +64,7 @@ class PrescriptionService:
 
         existing_prescription = PrescriptionRepository.get_by_medical_record_id(medical_record_id)
         if existing_prescription:
-            raise BusinessException("Ho so benh an nay da co don thuoc.")
+            raise BusinessException("Hồ sơ bệnh án này đã có đơn thuốc.")
 
         return PrescriptionRepository.create(
             medical_record=record,
@@ -79,7 +79,22 @@ class PrescriptionService:
 
         prescription = PrescriptionRepository.get_by_medical_record_id(medical_record_id)
         if not prescription:
-            raise NotFoundException("Khong tim thay don thuoc.")
+            raise NotFoundException("Không tìm thấy đơn thuốc.")
+
+        return prescription
+
+    @staticmethod
+    def get_pet_owner_prescription_by_medical_record(user, medical_record_id):
+        record = MedicalRecordRepository.get_by_id(medical_record_id)
+        if not record:
+            raise NotFoundException("Không tìm thấy hồ sơ bệnh án.")
+
+        if record.pet.owner_id != user.id:
+            raise PermissionDeniedException("Bạn không có quyền xem đơn thuốc này.")
+
+        prescription = PrescriptionRepository.get_by_medical_record_id(medical_record_id)
+        if not prescription:
+            raise NotFoundException("Không tìm thấy đơn thuốc.")
 
         return prescription
 
@@ -102,14 +117,14 @@ class PrescriptionService:
         medicine = PrescriptionService._get_staff_clinic_medicine(user, data["medicine_id"])
 
         if medicine.stock_quantity < data["quantity"]:
-            raise BusinessException("So luong thuoc ton kho khong du.")
+            raise BusinessException("Số lượng thuốc tồn kho không đủ.")
 
         existing_item = PrescriptionItemRepository.get_by_prescription_and_medicine(
             prescription.id,
             medicine.id,
         )
         if existing_item:
-            raise BusinessException("Thuoc nay da ton tai trong don thuoc.")
+            raise BusinessException("Thuốc này đã tồn tại trong đơn thuốc.")
 
         item = PrescriptionItemRepository.create(
             prescription=prescription,
@@ -129,16 +144,16 @@ class PrescriptionService:
     def update_prescription_item(user, item_id, data):
         item = PrescriptionItemRepository.get_by_id(item_id)
         if not item:
-            raise NotFoundException("Khong tim thay chi tiet don thuoc.")
+            raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
 
-        prescription = PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
+        PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
         medicine = item.medicine
 
         new_quantity = data.get("quantity", item.quantity)
         quantity_diff = new_quantity - item.quantity
 
         if quantity_diff > 0 and medicine.stock_quantity < quantity_diff:
-            raise BusinessException("So luong thuoc ton kho khong du.")
+            raise BusinessException("Số lượng thuốc tồn kho không đủ.")
 
         if quantity_diff != 0:
             medicine.stock_quantity -= quantity_diff
@@ -161,7 +176,7 @@ class PrescriptionService:
     def delete_prescription_item(user, item_id):
         item = PrescriptionItemRepository.get_by_id(item_id)
         if not item:
-            raise NotFoundException("Khong tim thay chi tiet don thuoc.")
+            raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
 
         PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
 

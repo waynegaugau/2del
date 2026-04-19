@@ -1,9 +1,8 @@
+from src.common.exceptions import BusinessException, NotFoundException
 from src.repositories.pet_repository import PetRepository
-from src.common.exceptions import NotFoundException, BusinessException
 
 
 class PetService:
-
     @staticmethod
     def create_pet(user, data):
         return PetRepository.create(

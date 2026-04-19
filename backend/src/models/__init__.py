@@ -1,4 +1,4 @@
-from .user import User
+from .user import User, StaffUser
 from .pet import Pet
 from .clinic import Clinic, Service
 from .appointment import Appointment

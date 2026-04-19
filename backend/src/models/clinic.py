@@ -9,6 +9,11 @@ class Clinic(TimeStampedModel):
     email = models.EmailField(blank=True)
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = "clinics"
+        verbose_name = "Phòng khám"
+        verbose_name_plural = "Phòng khám"
+
     def __str__(self):
         return self.name
 
@@ -41,6 +46,11 @@ class Service(TimeStampedModel):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     duration_minutes = models.PositiveIntegerField(default=60)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "services"
+        verbose_name = "Dịch vụ"
+        verbose_name_plural = "Dịch vụ"
 
     def __str__(self):
         return f"{self.name} - {self.clinic.name}"

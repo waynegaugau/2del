@@ -53,13 +53,13 @@ class MedicalRecordCreateSerializer(serializers.Serializer):
     def validate_symptoms(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Trieu chung khong duoc de trong.")
+            raise serializers.ValidationError("Triệu chứng không được để trống.")
         return value
 
     def validate_diagnosis(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Chan doan khong duoc de trong.")
+            raise serializers.ValidationError("Chẩn đoán không được để trống.")
         return value
 
 
@@ -72,11 +72,11 @@ class MedicalRecordUpdateSerializer(serializers.Serializer):
     def validate_symptoms(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Trieu chung khong duoc de trong.")
+            raise serializers.ValidationError("Triệu chứng không được để trống.")
         return value
 
     def validate_diagnosis(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("Chan doan khong duoc de trong.")
+            raise serializers.ValidationError("Chẩn đoán không được để trống.")
         return value

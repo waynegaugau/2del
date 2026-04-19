@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
+
 from src.models import Appointment
 
 
@@ -39,7 +40,7 @@ class AppointmentCreateSerializer(serializers.Serializer):
 
     def validate_appointment_time(self, value):
         if value <= timezone.now():
-            raise serializers.ValidationError("Thoi gian dat lich phai lon hon thoi diem hien tai.")
+            raise serializers.ValidationError("Thời gian đặt lịch phải lớn hơn thời điểm hiện tại.")
         return value
 
 
@@ -49,5 +50,5 @@ class AppointmentUpdateSerializer(serializers.Serializer):
 
     def validate_appointment_time(self, value):
         if value <= timezone.now():
-            raise serializers.ValidationError("Thoi gian dat lich phai lon hon thoi diem hien tai.")
+            raise serializers.ValidationError("Thời gian đặt lịch phải lớn hơn thời điểm hiện tại.")
         return value

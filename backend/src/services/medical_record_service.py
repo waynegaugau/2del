@@ -1,12 +1,12 @@
-from src.models import Appointment
-from src.repositories.appointment_repository import AppointmentRepository
-from src.repositories.medical_record_repository import MedicalRecordRepository
-from src.repositories.pet_repository import PetRepository
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
     PermissionDeniedException,
 )
+from src.models import Appointment
+from src.repositories.appointment_repository import AppointmentRepository
+from src.repositories.medical_record_repository import MedicalRecordRepository
+from src.repositories.pet_repository import PetRepository
 
 
 class MedicalRecordService:
@@ -19,17 +19,17 @@ class MedicalRecordService:
     @staticmethod
     def _get_staff_clinic_appointment(user, appointment_id):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
 
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen thao tac ho so benh an cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền thao tác hồ sơ bệnh án của phòng khám khác.")
 
         if appointment.status not in MedicalRecordService.ALLOWED_APPOINTMENT_STATUSES:
-            raise BusinessException("Chi duoc tao ho so benh an khi lich hen da check-in, dang kham hoac da hoan tat.")
+            raise BusinessException("Chỉ được tạo hồ sơ bệnh án khi lịch hẹn đã check-in, đang khám hoặc đã hoàn tất.")
 
         return appointment
 
@@ -39,7 +39,7 @@ class MedicalRecordService:
 
         existing_record = MedicalRecordRepository.get_by_appointment_id(appointment_id)
         if existing_record:
-            raise BusinessException("Lich hen nay da co ho so benh an.")
+            raise BusinessException("Lịch hẹn này đã có hồ sơ bệnh án.")
 
         return MedicalRecordRepository.create(
             appointment=appointment,
@@ -58,7 +58,7 @@ class MedicalRecordService:
 
         record = MedicalRecordRepository.get_by_appointment_id(appointment_id)
         if not record:
-            raise NotFoundException("Khong tim thay ho so benh an.")
+            raise NotFoundException("Không tìm thấy hồ sơ bệnh án.")
 
         return record
 
@@ -66,26 +66,48 @@ class MedicalRecordService:
     def get_medical_record_detail(user, record_id):
         record = MedicalRecordRepository.get_by_id(record_id)
         if not record:
-            raise NotFoundException("Khong tim thay ho so benh an.")
+            raise NotFoundException("Không tìm thấy hồ sơ bệnh án.")
 
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
 
         if user.clinic_id != record.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen xem ho so benh an cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền xem hồ sơ bệnh án của phòng khám khác.")
 
         return record
 
     @staticmethod
     def get_pet_medical_records(user, pet_id):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
 
         pet = PetRepository.get_by_id_including_inactive(pet_id)
         if not pet:
-            raise NotFoundException("Khong tim thay thu cung.")
+            raise NotFoundException("Không tìm thấy thú cưng.")
 
         return MedicalRecordRepository.get_by_pet_id_and_clinic_id(pet_id, user.clinic_id)
+
+    @staticmethod
+    def get_pet_owner_medical_records(user, pet_id):
+        pet = PetRepository.get_by_id_including_inactive(pet_id)
+        if not pet:
+            raise NotFoundException("Không tìm thấy thú cưng.")
+
+        if pet.owner_id != user.id:
+            raise PermissionDeniedException("Bạn không có quyền xem hồ sơ của thú cưng này.")
+
+        return MedicalRecordRepository.get_by_pet_id(pet_id)
+
+    @staticmethod
+    def get_pet_owner_medical_record_detail(user, record_id):
+        record = MedicalRecordRepository.get_by_id(record_id)
+        if not record:
+            raise NotFoundException("Không tìm thấy hồ sơ bệnh án.")
+
+        if record.pet.owner_id != user.id:
+            raise PermissionDeniedException("Bạn không có quyền xem hồ sơ bệnh án này.")
+
+        return record
 
     @staticmethod
     def update_medical_record(user, record_id, data):

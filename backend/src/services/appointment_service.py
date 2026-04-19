@@ -1,12 +1,12 @@
 from datetime import timedelta
 
-from src.models import Appointment, Pet, Clinic, Service
-from src.repositories.appointment_repository import AppointmentRepository
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
     PermissionDeniedException,
 )
+from src.models import Appointment, Clinic, Pet, Service
+from src.repositories.appointment_repository import AppointmentRepository
 
 
 class AppointmentService:
@@ -32,19 +32,19 @@ class AppointmentService:
     def create_appointment(user, data):
         pet = Pet.objects.filter(id=data["pet_id"], owner=user, is_active=True).first()
         if not pet:
-            raise NotFoundException("Khong tim thay thu cung hoac ban khong co quyen su dung.")
+            raise NotFoundException("Không tìm thấy thú cưng hoặc bạn không có quyền sử dụng.")
 
         clinic = Clinic.objects.filter(id=data["clinic_id"], is_active=True).first()
         if not clinic:
-            raise NotFoundException("Phong kham khong ton tai hoac dang ngung hoat dong.")
+            raise NotFoundException("Phòng khám không tồn tại hoặc đang ngừng hoạt động.")
 
         service = Service.objects.filter(
             id=data["service_id"],
             clinic=clinic,
-            is_active=True
+            is_active=True,
         ).first()
         if not service:
-            raise NotFoundException("Dich vu khong hop le tai phong kham nay.")
+            raise NotFoundException("Dịch vụ không hợp lệ tại phòng khám này.")
 
         appointment_time = data["appointment_time"]
 
@@ -53,7 +53,7 @@ class AppointmentService:
             appointment_time,
             service.duration_minutes,
         ):
-            raise BusinessException("Khung gio nay bi trung voi lich hen khac.")
+            raise BusinessException("Khung giờ này bị trùng với lịch hẹn khác.")
 
         return AppointmentRepository.create(
             owner=user,
@@ -72,21 +72,21 @@ class AppointmentService:
     @staticmethod
     def get_clinic_appointments(user):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
 
         return AppointmentRepository.get_all_by_clinic_id(user.clinic_id)
 
     @staticmethod
     def get_clinic_appointment_detail(user, appointment_id):
         if not user.clinic_id:
-            raise BusinessException("Tai khoan staff chua duoc gan phong kham.")
+            raise BusinessException("Tài khoản staff chưa được gán phòng khám.")
 
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen xem lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền xem lịch hẹn của phòng khám khác.")
 
         return appointment
 
@@ -94,10 +94,10 @@ class AppointmentService:
     def get_appointment_detail(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if appointment.owner != user:
-            raise BusinessException("Ban khong co quyen truy cap lich hen nay.")
+            raise BusinessException("Bạn không có quyền truy cập lịch hẹn này.")
 
         return appointment
 
@@ -105,10 +105,10 @@ class AppointmentService:
     def update_appointment(user, appointment_id, data):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if appointment.owner != user:
-            raise BusinessException("Ban khong co quyen sua lich hen nay.")
+            raise BusinessException("Bạn không có quyền sửa lịch hẹn này.")
 
         if appointment.status in [
             Appointment.STATUS_CONFIRMED,
@@ -118,7 +118,7 @@ class AppointmentService:
             Appointment.STATUS_CANCELLED,
             Appointment.STATUS_NO_SHOW,
         ]:
-            raise BusinessException("Khong the cap nhat lich hen khi phong kham da tiep nhan xu ly.")
+            raise BusinessException("Không thể cập nhật lịch hẹn khi phòng khám đã tiếp nhận xử lý.")
 
         new_time = data.get("appointment_time")
         if new_time and new_time != appointment.appointment_time:
@@ -128,7 +128,7 @@ class AppointmentService:
                 appointment.service.duration_minutes,
                 exclude_appointment_id=appointment.id,
             ):
-                raise BusinessException("Khung gio moi bi trung voi lich hen khac.")
+                raise BusinessException("Khung giờ mới bị trùng với lịch hẹn khác.")
             appointment.appointment_time = new_time
 
         if "note" in data:
@@ -140,10 +140,10 @@ class AppointmentService:
     def cancel_appointment(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if appointment.owner != user:
-            raise BusinessException("Ban khong co quyen huy lich hen nay.")
+            raise BusinessException("Bạn không có quyền hủy lịch hẹn này.")
 
         if appointment.status in [
             Appointment.STATUS_CHECKED_IN,
@@ -152,10 +152,10 @@ class AppointmentService:
             Appointment.STATUS_CANCELLED,
             Appointment.STATUS_NO_SHOW,
         ]:
-            raise BusinessException("Khong the huy lich hen o trang thai hien tai.")
+            raise BusinessException("Không thể hủy lịch hẹn ở trạng thái hiện tại.")
 
         if appointment.status == Appointment.STATUS_CONFIRMED:
-            raise BusinessException("Khong the huy lich hen sau khi phong kham da xac nhan.")
+            raise BusinessException("Không thể hủy lịch hẹn sau khi phòng khám đã xác nhận.")
 
         appointment.status = Appointment.STATUS_CANCELLED
         return AppointmentRepository.save(appointment)
@@ -164,13 +164,13 @@ class AppointmentService:
     def confirm_appointment(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen xac nhan lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền xác nhận lịch hẹn của phòng khám khác.")
 
         if appointment.status != Appointment.STATUS_PENDING:
-            raise BusinessException("Chi lich hen dang cho xac nhan moi duoc duyet.")
+            raise BusinessException("Chỉ lịch hẹn đang chờ xác nhận mới được duyệt.")
 
         appointment.status = Appointment.STATUS_CONFIRMED
         return AppointmentRepository.save(appointment)
@@ -179,13 +179,13 @@ class AppointmentService:
     def check_in(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen check-in lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền check-in lịch hẹn của phòng khám khác.")
 
         if appointment.status != Appointment.STATUS_CONFIRMED:
-            raise BusinessException("Chi lich hen da xac nhan moi duoc check-in.")
+            raise BusinessException("Chỉ lịch hẹn đã xác nhận mới được check-in.")
 
         appointment.status = Appointment.STATUS_CHECKED_IN
         return AppointmentRepository.save(appointment)
@@ -194,13 +194,13 @@ class AppointmentService:
     def start_appointment(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen bat dau kham lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền bắt đầu khám lịch hẹn của phòng khám khác.")
 
         if appointment.status != Appointment.STATUS_CHECKED_IN:
-            raise BusinessException("Chi lich hen da check-in moi co the bat dau kham.")
+            raise BusinessException("Chỉ lịch hẹn đã check-in mới có thể bắt đầu khám.")
 
         appointment.status = Appointment.STATUS_IN_PROGRESS
         return AppointmentRepository.save(appointment)
@@ -209,13 +209,13 @@ class AppointmentService:
     def complete_appointment(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen hoan tat lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền hoàn tất lịch hẹn của phòng khám khác.")
 
         if appointment.status != Appointment.STATUS_IN_PROGRESS:
-            raise BusinessException("Chi lich hen dang kham moi co the hoan tat.")
+            raise BusinessException("Chỉ lịch hẹn đang khám mới có thể hoàn tất.")
 
         appointment.status = Appointment.STATUS_COMPLETED
         return AppointmentRepository.save(appointment)
@@ -224,13 +224,13 @@ class AppointmentService:
     def mark_no_show(user, appointment_id):
         appointment = AppointmentRepository.get_by_id(appointment_id)
         if not appointment:
-            raise NotFoundException("Khong tim thay lich hen.")
+            raise NotFoundException("Không tìm thấy lịch hẹn.")
 
         if user.clinic_id != appointment.clinic_id:
-            raise PermissionDeniedException("Ban khong co quyen cap nhat lich hen cua phong kham khac.")
+            raise PermissionDeniedException("Bạn không có quyền cập nhật lịch hẹn của phòng khám khác.")
 
         if appointment.status != Appointment.STATUS_CONFIRMED:
-            raise BusinessException("Chi lich hen da xac nhan moi co the danh dau vang mat.")
+            raise BusinessException("Chỉ lịch hẹn đã xác nhận mới có thể đánh dấu vắng mặt.")
 
         appointment.status = Appointment.STATUS_NO_SHOW
         return AppointmentRepository.save(appointment)

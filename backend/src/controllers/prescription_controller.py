@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 
-from src.common.permissions import IsClinicStaffRole
+from src.common.permissions import IsClinicStaffRole, IsPetOwnerRole
 from src.common.responses import success_response
 from src.serializers.prescription_item_serializer import (
     PrescriptionItemCreateSerializer,
@@ -25,7 +25,7 @@ class MedicalRecordPrescriptionAPIView(APIView):
             medical_record_id,
         )
         serializer = PrescriptionSerializer(prescription)
-        return success_response(serializer.data, "Lay don thuoc thanh cong")
+        return success_response(serializer.data, "Lấy đơn thuốc thành công")
 
     def post(self, request, medical_record_id):
         serializer = PrescriptionCreateSerializer(data=request.data)
@@ -39,7 +39,7 @@ class MedicalRecordPrescriptionAPIView(APIView):
         output = PrescriptionSerializer(prescription)
         return success_response(
             output.data,
-            "Tao don thuoc thanh cong",
+            "Tạo đơn thuốc thành công",
             status.HTTP_201_CREATED,
         )
 
@@ -50,7 +50,7 @@ class PrescriptionDetailAPIView(APIView):
     def get(self, request, prescription_id):
         prescription = PrescriptionService.get_prescription_detail(request.user, prescription_id)
         serializer = PrescriptionSerializer(prescription)
-        return success_response(serializer.data, "Lay chi tiet don thuoc thanh cong")
+        return success_response(serializer.data, "Lấy chi tiết đơn thuốc thành công")
 
     def put(self, request, prescription_id):
         serializer = PrescriptionUpdateSerializer(data=request.data)
@@ -62,7 +62,7 @@ class PrescriptionDetailAPIView(APIView):
             serializer.validated_data,
         )
         output = PrescriptionSerializer(prescription)
-        return success_response(output.data, "Cap nhat don thuoc thanh cong")
+        return success_response(output.data, "Cập nhật đơn thuốc thành công")
 
 
 class PrescriptionItemListCreateAPIView(APIView):
@@ -80,7 +80,7 @@ class PrescriptionItemListCreateAPIView(APIView):
         output = PrescriptionItemSerializer(item)
         return success_response(
             output.data,
-            "Them thuoc vao don thanh cong",
+            "Thêm thuốc vào đơn thành công",
             status.HTTP_201_CREATED,
         )
 
@@ -98,8 +98,20 @@ class PrescriptionItemDetailAPIView(APIView):
             serializer.validated_data,
         )
         output = PrescriptionItemSerializer(item)
-        return success_response(output.data, "Cap nhat chi tiet don thuoc thanh cong")
+        return success_response(output.data, "Cập nhật chi tiết đơn thuốc thành công")
 
     def delete(self, request, item_id):
         PrescriptionService.delete_prescription_item(request.user, item_id)
-        return success_response(message="Xoa chi tiet don thuoc thanh cong")
+        return success_response(message="Xóa chi tiết đơn thuốc thành công")
+
+
+class PetOwnerMedicalRecordPrescriptionAPIView(APIView):
+    permission_classes = [IsPetOwnerRole]
+
+    def get(self, request, medical_record_id):
+        prescription = PrescriptionService.get_pet_owner_prescription_by_medical_record(
+            request.user,
+            medical_record_id,
+        )
+        serializer = PrescriptionSerializer(prescription)
+        return success_response(serializer.data, "Lấy đơn thuốc thành công")
