@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
@@ -33,10 +35,9 @@ class MedicineService:
         raise BusinessException("Status thuốc không hợp lệ. Chỉ chấp nhận active, inactive hoặc all.")
 
     @staticmethod
-    def _get_staff_clinic_medicine(user, medicine_id):
+    def _validate_staff_clinic_medicine(user, medicine):
         clinic_id = MedicineService._get_staff_clinic_id(user)
 
-        medicine = MedicineRepository.get_by_id(medicine_id)
         if not medicine:
             raise NotFoundException("Không tìm thấy thuốc.")
 
@@ -44,6 +45,16 @@ class MedicineService:
             raise PermissionDeniedException("Bạn không có quyền thao tác thuốc của phòng khám khác.")
 
         return medicine
+
+    @staticmethod
+    def _get_staff_clinic_medicine(user, medicine_id):
+        medicine = MedicineRepository.get_by_id(medicine_id)
+        return MedicineService._validate_staff_clinic_medicine(user, medicine)
+
+    @staticmethod
+    def _get_staff_clinic_medicine_for_update(user, medicine_id):
+        medicine = MedicineRepository.get_by_id_for_update(medicine_id)
+        return MedicineService._validate_staff_clinic_medicine(user, medicine)
 
     @staticmethod
     def get_clinic_medicines(user, status=None):
@@ -84,35 +95,36 @@ class MedicineService:
 
     @staticmethod
     def update_medicine(user, medicine_id, data):
-        medicine = MedicineService._get_staff_clinic_medicine(user, medicine_id)
+        with transaction.atomic():
+            medicine = MedicineService._get_staff_clinic_medicine_for_update(user, medicine_id)
 
-        if "name" in data:
-            new_name = data["name"].strip()
-            existing_medicine = MedicineRepository.get_by_clinic_id_and_name(medicine.clinic_id, new_name)
-            if existing_medicine and existing_medicine.id != medicine.id:
-                if existing_medicine.is_active:
-                    raise BusinessException("Thuốc này đã tồn tại trong phòng khám.")
-                raise BusinessException(
-                    "Tên thuốc này đang thuộc về một thuốc đã ngừng hoạt động. Hãy kích hoạt lại thuốc đó thay vì đổi tên."
-                )
-            medicine.name = new_name
+            if "name" in data:
+                new_name = data["name"].strip()
+                existing_medicine = MedicineRepository.get_by_clinic_id_and_name(medicine.clinic_id, new_name)
+                if existing_medicine and existing_medicine.id != medicine.id:
+                    if existing_medicine.is_active:
+                        raise BusinessException("Thuốc này đã tồn tại trong phòng khám.")
+                    raise BusinessException(
+                        "Tên thuốc này đang thuộc về một thuốc đã ngừng hoạt động. Hãy kích hoạt lại thuốc đó thay vì đổi tên."
+                    )
+                medicine.name = new_name
 
-        if "unit" in data:
-            medicine.unit = data["unit"].strip()
+            if "unit" in data:
+                medicine.unit = data["unit"].strip()
 
-        if "description" in data:
-            medicine.description = data["description"]
+            if "description" in data:
+                medicine.description = data["description"]
 
-        if "stock_quantity" in data:
-            medicine.stock_quantity = data["stock_quantity"]
+            if "stock_quantity" in data:
+                medicine.stock_quantity = data["stock_quantity"]
 
-        if "price" in data:
-            medicine.price = data["price"]
+            if "price" in data:
+                medicine.price = data["price"]
 
-        if "is_active" in data:
-            medicine.is_active = data["is_active"]
+            if "is_active" in data:
+                medicine.is_active = data["is_active"]
 
-        return MedicineRepository.save(medicine)
+            return MedicineRepository.save(medicine)
 
     @staticmethod
     def delete_medicine(user, medicine_id):

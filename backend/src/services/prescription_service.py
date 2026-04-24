@@ -1,5 +1,8 @@
+from django.db import IntegrityError, transaction
+
 from src.common.exceptions import (
     BusinessException,
+    ConflictException,
     NotFoundException,
     PermissionDeniedException,
 )
@@ -43,10 +46,9 @@ class PrescriptionService:
         return prescription
 
     @staticmethod
-    def _get_staff_clinic_medicine(user, medicine_id):
+    def _validate_staff_clinic_medicine(user, medicine):
         clinic_id = PrescriptionService._get_staff_clinic_id(user)
 
-        medicine = MedicineRepository.get_by_id(medicine_id)
         if not medicine:
             raise NotFoundException("Không tìm thấy thuốc.")
 
@@ -59,19 +61,33 @@ class PrescriptionService:
         return medicine
 
     @staticmethod
+    def _get_staff_clinic_medicine(user, medicine_id):
+        medicine = MedicineRepository.get_by_id(medicine_id)
+        return PrescriptionService._validate_staff_clinic_medicine(user, medicine)
+
+    @staticmethod
+    def _get_staff_clinic_medicine_for_update(user, medicine_id):
+        medicine = MedicineRepository.get_by_id_for_update(medicine_id)
+        return PrescriptionService._validate_staff_clinic_medicine(user, medicine)
+
+    @staticmethod
     def create_prescription(user, medical_record_id, data):
-        record = PrescriptionService._get_staff_clinic_medical_record(user, medical_record_id)
+        with transaction.atomic():
+            record = PrescriptionService._get_staff_clinic_medical_record(user, medical_record_id)
 
-        existing_prescription = PrescriptionRepository.get_by_medical_record_id(medical_record_id)
-        if existing_prescription:
-            raise BusinessException("Hồ sơ bệnh án này đã có đơn thuốc.")
+            existing_prescription = PrescriptionRepository.get_by_medical_record_id(medical_record_id)
+            if existing_prescription:
+                raise BusinessException("Hồ sơ bệnh án này đã có đơn thuốc.")
 
-        return PrescriptionRepository.create(
-            medical_record=record,
-            clinic=record.clinic,
-            staff=user,
-            note=data.get("note", ""),
-        )
+            try:
+                return PrescriptionRepository.create(
+                    medical_record=record,
+                    clinic=record.clinic,
+                    staff=user,
+                    note=data.get("note", ""),
+                )
+            except IntegrityError as exc:
+                raise ConflictException("Hồ sơ bệnh án này đã có đơn thuốc.") from exc
 
     @staticmethod
     def get_prescription_by_medical_record(user, medical_record_id):
@@ -113,75 +129,80 @@ class PrescriptionService:
 
     @staticmethod
     def add_prescription_item(user, prescription_id, data):
-        prescription = PrescriptionService._get_staff_clinic_prescription(user, prescription_id)
-        medicine = PrescriptionService._get_staff_clinic_medicine(user, data["medicine_id"])
+        with transaction.atomic():
+            prescription = PrescriptionService._get_staff_clinic_prescription(user, prescription_id)
+            medicine = PrescriptionService._get_staff_clinic_medicine_for_update(user, data["medicine_id"])
 
-        if medicine.stock_quantity < data["quantity"]:
-            raise BusinessException("Số lượng thuốc tồn kho không đủ.")
+            if medicine.stock_quantity < data["quantity"]:
+                raise BusinessException("Số lượng thuốc tồn kho không đủ.")
 
-        existing_item = PrescriptionItemRepository.get_by_prescription_and_medicine(
-            prescription.id,
-            medicine.id,
-        )
-        if existing_item:
-            raise BusinessException("Thuốc này đã tồn tại trong đơn thuốc.")
+            existing_item = PrescriptionItemRepository.get_by_prescription_and_medicine(
+                prescription.id,
+                medicine.id,
+            )
+            if existing_item:
+                raise BusinessException("Thuốc này đã tồn tại trong đơn thuốc.")
 
-        item = PrescriptionItemRepository.create(
-            prescription=prescription,
-            medicine=medicine,
-            quantity=data["quantity"],
-            dosage=data["dosage"],
-            frequency=data["frequency"],
-            duration_days=data["duration_days"],
-            instruction=data.get("instruction", ""),
-        )
+            medicine.stock_quantity -= data["quantity"]
+            MedicineRepository.save(medicine)
 
-        medicine.stock_quantity -= data["quantity"]
-        MedicineRepository.save(medicine)
-        return item
+            try:
+                return PrescriptionItemRepository.create(
+                    prescription=prescription,
+                    medicine=medicine,
+                    quantity=data["quantity"],
+                    dosage=data["dosage"],
+                    frequency=data["frequency"],
+                    duration_days=data["duration_days"],
+                    instruction=data.get("instruction", ""),
+                )
+            except IntegrityError as exc:
+                raise ConflictException("Thuốc này đã tồn tại trong đơn thuốc.") from exc
 
     @staticmethod
     def update_prescription_item(user, item_id, data):
-        item = PrescriptionItemRepository.get_by_id(item_id)
-        if not item:
-            raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
+        with transaction.atomic():
+            item = PrescriptionItemRepository.get_by_id_for_update(item_id)
+            if not item:
+                raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
 
-        PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
-        medicine = item.medicine
+            PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
+            medicine = PrescriptionService._get_staff_clinic_medicine_for_update(user, item.medicine_id)
 
-        new_quantity = data.get("quantity", item.quantity)
-        quantity_diff = new_quantity - item.quantity
+            new_quantity = data.get("quantity", item.quantity)
+            quantity_diff = new_quantity - item.quantity
 
-        if quantity_diff > 0 and medicine.stock_quantity < quantity_diff:
-            raise BusinessException("Số lượng thuốc tồn kho không đủ.")
+            if quantity_diff > 0 and medicine.stock_quantity < quantity_diff:
+                raise BusinessException("Số lượng thuốc tồn kho không đủ.")
 
-        if quantity_diff != 0:
-            medicine.stock_quantity -= quantity_diff
-            MedicineRepository.save(medicine)
+            if quantity_diff != 0:
+                medicine.stock_quantity -= quantity_diff
+                MedicineRepository.save(medicine)
 
-        item.quantity = new_quantity
+            item.quantity = new_quantity
 
-        if "dosage" in data:
-            item.dosage = data["dosage"]
-        if "frequency" in data:
-            item.frequency = data["frequency"]
-        if "duration_days" in data:
-            item.duration_days = data["duration_days"]
-        if "instruction" in data:
-            item.instruction = data["instruction"]
+            if "dosage" in data:
+                item.dosage = data["dosage"]
+            if "frequency" in data:
+                item.frequency = data["frequency"]
+            if "duration_days" in data:
+                item.duration_days = data["duration_days"]
+            if "instruction" in data:
+                item.instruction = data["instruction"]
 
-        return PrescriptionItemRepository.save(item)
+            return PrescriptionItemRepository.save(item)
 
     @staticmethod
     def delete_prescription_item(user, item_id):
-        item = PrescriptionItemRepository.get_by_id(item_id)
-        if not item:
-            raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
+        with transaction.atomic():
+            item = PrescriptionItemRepository.get_by_id_for_update(item_id)
+            if not item:
+                raise NotFoundException("Không tìm thấy chi tiết đơn thuốc.")
 
-        PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
+            PrescriptionService._get_staff_clinic_prescription(user, item.prescription_id)
 
-        medicine = item.medicine
-        medicine.stock_quantity += item.quantity
-        MedicineRepository.save(medicine)
+            medicine = PrescriptionService._get_staff_clinic_medicine_for_update(user, item.medicine_id)
+            medicine.stock_quantity += item.quantity
+            MedicineRepository.save(medicine)
 
-        PrescriptionItemRepository.delete(item)
+            PrescriptionItemRepository.delete(item)

@@ -11,6 +11,10 @@ class MedicineRepository:
         return Medicine.objects.select_related("clinic").filter(id=medicine_id).first()
 
     @staticmethod
+    def get_by_id_for_update(medicine_id: int):
+        return Medicine.objects.select_related("clinic").select_for_update().filter(id=medicine_id).first()
+
+    @staticmethod
     def get_by_clinic_id(clinic_id: int, is_active=None):
         queryset = Medicine.objects.select_related("clinic").filter(clinic_id=clinic_id)
         if is_active is not None:
