@@ -1,5 +1,8 @@
+from django.db import IntegrityError, transaction
+
 from src.common.exceptions import (
     BusinessException,
+    ConflictException,
     NotFoundException,
     PermissionDeniedException,
 )
@@ -35,22 +38,26 @@ class MedicalRecordService:
 
     @staticmethod
     def create_medical_record(user, appointment_id, data):
-        appointment = MedicalRecordService._get_staff_clinic_appointment(user, appointment_id)
+        with transaction.atomic():
+            appointment = MedicalRecordService._get_staff_clinic_appointment(user, appointment_id)
 
-        existing_record = MedicalRecordRepository.get_by_appointment_id(appointment_id)
-        if existing_record:
-            raise BusinessException("Lịch hẹn này đã có hồ sơ bệnh án.")
+            existing_record = MedicalRecordRepository.get_by_appointment_id(appointment_id)
+            if existing_record:
+                raise BusinessException("Lịch hẹn này đã có hồ sơ bệnh án.")
 
-        return MedicalRecordRepository.create(
-            appointment=appointment,
-            pet=appointment.pet,
-            clinic=appointment.clinic,
-            staff=user,
-            symptoms=data["symptoms"],
-            diagnosis=data["diagnosis"],
-            treatment=data.get("treatment", ""),
-            note=data.get("note", ""),
-        )
+            try:
+                return MedicalRecordRepository.create(
+                    appointment=appointment,
+                    pet=appointment.pet,
+                    clinic=appointment.clinic,
+                    staff=user,
+                    symptoms=data["symptoms"],
+                    diagnosis=data["diagnosis"],
+                    treatment=data.get("treatment", ""),
+                    note=data.get("note", ""),
+                )
+            except IntegrityError as exc:
+                raise ConflictException("Hồ sơ bệnh án này đã tồn tại.") from exc
 
     @staticmethod
     def get_medical_record_by_appointment(user, appointment_id):

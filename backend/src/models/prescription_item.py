@@ -23,6 +23,12 @@ class PrescriptionItem(TimeStampedModel):
     class Meta:
         db_table = "prescription_items"
         ordering = ["id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["prescription", "medicine"],
+                name="unique_prescription_medicine_item",
+            ),
+        ]
         verbose_name = "Chi tiết đơn thuốc"
         verbose_name_plural = "Chi tiết đơn thuốc"
 
