@@ -1,38 +1,59 @@
-import { Navbar, Nav, Container } from "react-bootstrap";
-import { NavLink } from "react-router-dom";
-import "./styles/Header.css"; 
+import { useContext } from 'react';
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { MyUserContext, MyDipatcherContext } from '../../configs/MyContexts';
+import './styles/Header.css';
 
 const Header = () => {
+    const user = useContext(MyUserContext);
+    const dispatch = useContext(MyDipatcherContext);
+    const nav = useNavigate();
+
+    const logout = () => {
+        dispatch({ type: "logout" });
+        nav("/login");
+    };
+
     return (
-        <Navbar bg="dark" variant="dark" expand="lg" className="py-3 shadow-sm">
+        <Navbar bg="dark" variant="dark" expand="lg" className="py-3 shadow-sm sticky-top">
             <Container>
-                {/* Logo / Tên thương hiệu */}
                 <Navbar.Brand as={NavLink} to="/" className="fw-bold fs-4 me-5">
                     THÚ Y 2DEL
                 </Navbar.Brand>
 
-                {/* Nút toggle cho giao diện điện thoại */}
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 
                 <Navbar.Collapse id="basic-navbar-nav">
-                    {/* Các link điều hướng chính */}
                     <Nav className="me-auto custom-nav">
-                        <Nav.Link as={NavLink} to="/gioi-thieu" className="mx-2 fw-semibold">
-                            Giới thiệu
-                        </Nav.Link>
-                        <Nav.Link as={NavLink} to="/dich-vu" className="mx-2 fw-semibold">
-                            Dịch vụ
-                        </Nav.Link>
-                        <Nav.Link as={NavLink} to="/dat-lich" className="mx-2 fw-semibold">
-                            Đặt lịch
-                        </Nav.Link>
+                        <Nav.Link as={NavLink} to="/" className="mx-2 fw-semibold">Trang chủ</Nav.Link>
+                        <Nav.Link as={NavLink} to="/dat-lich" className="mx-2 fw-semibold">Đặt lịch</Nav.Link>
+                        <Nav.Link as={NavLink} to="/medicine-management" className="mx-2 fw-semibold">Kho thuốc</Nav.Link>
                     </Nav>
 
-                    {/* Link đăng nhập góc phải */}
-                    <Nav>
-                        <Nav.Link as={NavLink} to="/login" className="fw-bold text-white">
-                            Đăng nhập
-                        </Nav.Link>
+                    <Nav className="align-items-center">
+                        {user === null ? (
+                            <>
+                                <Nav.Link as={NavLink} to="/login" className="fw-bold text-white mx-2">
+                                    Đăng nhập
+                                </Nav.Link>
+                                <Nav.Link as={NavLink} to="/register" className="btn btn-outline-success text-white px-3 fw-bold">
+                                    Đăng ký
+                                </Nav.Link>
+                            </>
+                        ) : (
+                            <NavDropdown 
+                                title={<span className="fw-bold text-success">Chào, {user.first_name || user.username}</span>} 
+                                id="user-dropdown"
+                                align="end"
+                            >
+                                <NavDropdown.Item as={NavLink} to="/editProfile">Hồ sơ cá nhân</NavDropdown.Item>
+                                <NavDropdown.Item as={NavLink} to="/change-password">Đổi mật khẩu</NavDropdown.Item>
+                                <NavDropdown.Divider />
+                                <NavDropdown.Item onClick={logout} className="text-danger fw-bold">
+                                    Đăng xuất
+                                </NavDropdown.Item>
+                            </NavDropdown>
+                        )}
                     </Nav>
                 </Navbar.Collapse>
             </Container>

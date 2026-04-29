@@ -13,7 +13,7 @@ const Login = () => {
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState();
-    
+
     const dispatch = useContext(MyDipatcherContext);
     const nav = useNavigate();
     const location = useLocation();
@@ -21,9 +21,7 @@ const Login = () => {
 
     useEffect(() => {
         if (message) {
-            const timer = setTimeout(() => {
-                setMessage("");
-            }, 5000);
+            const timer = setTimeout(() => setMessage(""), 5000);
             return () => clearTimeout(timer);
         }
     }, [message]);
@@ -42,28 +40,36 @@ const Login = () => {
         try {
             setLoading(true);
             setMsg(null);
-            let res = await Apis.post(endpoint['login'], {
-                ...user
-            });
 
-            cookie.save('token', res.data.token, { path: '/' });
+            const res = await Apis.post(endpoint['login'], { ...user });
 
-            let u = await authApis().get(endpoint['current_user']);
-            cookie.save('user', u.data, { path: '/' });
+            // TRUY CẬP ĐÚNG CẤU TRÚC: res.data.data.access_token
+            const accessToken = res.data?.data?.access_token;
+            const userData = res.data?.data?.user;
 
-            dispatch({
-                "type": "login",
-                "payload": u.data
-            });
-            toast.success("Đăng nhập thành công!");
-            nav("/");
+            if (accessToken) {
+                // 1. Lưu token vào cookie
+                cookie.save('token', accessToken, { path: '/' });
+
+                // 2. Vì server đã trả về object 'user' luôn rồi, 
+                // bạn có thể dùng luôn mà không cần gọi lại API profile (tiết kiệm 1 request)
+                cookie.save('user', userData, { path: '/' });
+
+                dispatch({
+                    "type": "login",
+                    "payload": userData
+                });
+
+                toast.success("Đăng nhập thành công!");
+                nav("/");
+            } else {
+                console.error("Cấu trúc JSON thực tế:", res.data);
+                setMsg("Không tìm thấy access_token trong phản hồi từ server.");
+            }
         } catch (ex) {
             console.error("Lỗi đăng nhập:", ex);
-            if (ex.response && ex.response.status === 401) {
-                setMsg("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại!");
-            } else {
-                setMsg("Đã xảy ra lỗi. Vui lòng thử lại sau!");
-            }
+            const errorMsg = ex.response?.data?.message || "Tên đăng nhập hoặc mật khẩu không chính xác.";
+            setMsg(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -71,29 +77,39 @@ const Login = () => {
 
     return (
         <Container fluid className="p-0">
-            {message && (
-                <div className="fade-out-message">
-                    {message}
-                </div>
-            )}
+            {message && <div className="fade-out-message">{message}</div>}
             <Row className="justify-content-center custom-row-primary mt-4">
-                <Col lg={6} md={4} sm={12}>
-                    <h1 className="text-center text-success mb-4">ĐĂNG NHẬP</h1>
+                <Col lg={5} md={7} sm={10} className="p-4 shadow rounded bg-white">
+                    <h1 className="text-center text-success mb-4 fw-bold">ĐĂNG NHẬP</h1>
                     {msg && <Alert variant="danger">{msg}</Alert>}
                     <Form onSubmit={login}>
                         {info.map(f => (
-                            <FloatingLabel key={f.field} controlId={`floatingInput-${f.field}`} label={f.label} className="mb-3">
-                                <Form.Control 
-                                    type={f.type} 
-                                    placeholder={f.label} 
-                                    required 
+                            <FloatingLabel key={f.field} controlId={`floating-${f.field}`} label={f.label} className="mb-3">
+                                <Form.Control
+                                    type={f.type}
+                                    placeholder={f.label}
+                                    required
                                     value={user[f.field] || ""}
-                                    onChange={e => setState(e.target.value, f.field)} 
+                                    onChange={e => setState(e.target.value, f.field)}
                                 />
                             </FloatingLabel>
                         ))}
-                        {loading ? <MySpinner /> : <Button type="submit" variant="success" className="mt-1 mb-1">Đăng nhập</Button>}
+
+                        <Button type="submit" variant="success" className="w-100 py-2 fw-bold" disabled={loading}>
+                            {loading ? <MySpinner /> : "Đăng nhập"}
+                        </Button>
                     </Form>
+
+                    <div className="mt-4 text-center border-top pt-3">
+                        <p className="mb-0 text-muted">Chưa có tài khoản?</p>
+                        <Button
+                            variant="link"
+                            className="text-success fw-bold p-0"
+                            onClick={() => nav("/register")}
+                        >
+                            Đăng ký ngay tại đây
+                        </Button>
+                    </div>
                 </Col>
             </Row>
         </Container>

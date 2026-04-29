@@ -1,5 +1,4 @@
 import { Col, Container, Row } from "react-bootstrap";
-// Nhớ tạo thư mục 'styles' (viết thường) bên trong thư mục 'layout' nhé
 import "./styles/Footer.css";
 
 const Footer = () => {
@@ -11,7 +10,7 @@ const Footer = () => {
                 <hr />
                 <Row>
                     <Col className="text-center footer-bottom">
-                        <p className="small">Copyright © {currentYear} - eDOCTOR.</p>
+                        <p className="small">Copyright © {currentYear} - 2DEL.</p>
                     </Col>
                 </Row>
                 <hr />

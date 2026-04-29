@@ -19,8 +19,8 @@ import MyToaster from "./component/layout/MyToaster";
 
 // Pages
 import Home from "./component/Home";
-// import Register from "./component/Register";
-// import Login from "./component/Login";
+import Register from "./component/Register";
+import Login from "./component/Login";
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
@@ -55,19 +55,19 @@ const App = () => {
       <MyDipatcherContext.Provider value={dispatch}>
         <BrowserRouter>
           <Header />
-          <Container fluid>
+          <Container fluid className="p-0">
             <MyToaster />
             {/* Component Toaster của react-hot-toast để hiển thị thông báo */}
             <Toaster position="top-right" /> 
             <Routes>
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/" element={<Home />} />
               {/* <Route path="/doctorAvailability" element={<DoctorAvailability />} />
               <Route path="/updateAppointment" element={<AppointmentUpdate />} />
               <Route path="/appointment" element={<Appointment />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/booking" element={<Booking />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
               <Route path="/payment-method" element={<PaymentMethod />} />
               <Route path="/payment-return" element={<PaymentReturn />} />
               <Route path="/invoice" element={<Invoice />} />
