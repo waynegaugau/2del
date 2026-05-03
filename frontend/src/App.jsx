@@ -21,6 +21,7 @@ import MyToaster from "./component/layout/MyToaster";
 import Home from "./component/Home";
 import Register from "./component/Register";
 import Login from "./component/Login";
+import Pet from "./component/Pet";
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
@@ -60,9 +61,10 @@ const App = () => {
             {/* Component Toaster của react-hot-toast để hiển thị thông báo */}
             <Toaster position="top-right" /> 
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Home />} />
+              <Route path="/pets" element={<Pet />} />
               {/* <Route path="/doctorAvailability" element={<DoctorAvailability />} />
               <Route path="/updateAppointment" element={<AppointmentUpdate />} />
               <Route path="/appointment" element={<Appointment />} />

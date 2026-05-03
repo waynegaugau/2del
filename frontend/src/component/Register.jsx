@@ -26,7 +26,6 @@ const Register = () => {
         try {
             setLoading(true);
             const { confirm, ...registerData } = user;
-            // Dựa trên serializer của bạn: username, email, password, full_name, phone, address
             const res = await Apis.post(endpoint['register'], registerData);
 
             if (res.status === 201 || res.status === 200) {
@@ -34,8 +33,21 @@ const Register = () => {
                 nav("/login");
             }
         } catch (ex) {
+            console.error("Full Error:", ex.response?.data);
             const errorData = ex.response?.data;
-            setMsg(errorData ? Object.values(errorData)[0] : "Lỗi đăng ký!");
+
+            if (errorData && errorData.errors) {
+                // Lấy danh sách các trường bị lỗi (ví dụ: ["password", "email"])
+                const fields = Object.keys(errorData.errors);
+                // Lấy lỗi đầu tiên của trường đầu tiên
+                const firstField = fields[0];
+                const firstError = errorData.errors[firstField][0];
+                setMsg(firstError);
+            } else if (errorData && errorData.message) {
+                setMsg(errorData.message);
+            } else {
+                setMsg("Đã có lỗi xảy ra. Vui lòng thử lại!");
+            }
         } finally {
             setLoading(false);
         }
@@ -48,7 +60,7 @@ const Register = () => {
                     <div className="p-4 shadow-lg rounded bg-white">
                         <h2 className="text-center text-success mb-4 fw-bold">TẠO TÀI KHOẢN MỚI</h2>
                         {msg && <Alert variant="danger" className="text-center py-2">{msg}</Alert>}
-                        
+
                         <Form onSubmit={register}>
                             <Row>
                                 {/* Hàng 1: Thông tin tài khoản */}

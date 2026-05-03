@@ -22,13 +22,17 @@ const Header = () => {
                 </Navbar.Brand>
 
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                
+
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto custom-nav">
                         <Nav.Link as={NavLink} to="/" className="mx-2 fw-semibold">Trang chủ</Nav.Link>
                         <Nav.Link as={NavLink} to="/dat-lich" className="mx-2 fw-semibold">Đặt lịch</Nav.Link>
                         <Nav.Link as={NavLink} to="/medicine-management" className="mx-2 fw-semibold">Kho thuốc</Nav.Link>
+                        <Nav.Link as={NavLink} to="/pets" className="mx-2 fw-semibold">
+                            Thú cưng của tôi
+                        </Nav.Link>
                     </Nav>
+
 
                     <Nav className="align-items-center">
                         {user === null ? (
@@ -41,8 +45,8 @@ const Header = () => {
                                 </Nav.Link>
                             </>
                         ) : (
-                            <NavDropdown 
-                                title={<span className="fw-bold text-success">Chào, {user.first_name || user.username}</span>} 
+                            <NavDropdown
+                                title={<span className="fw-bold text-success">Chào, {user.first_name || user.username}</span>}
                                 id="user-dropdown"
                                 align="end"
                             >
