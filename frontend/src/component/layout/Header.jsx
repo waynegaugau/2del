@@ -25,12 +25,9 @@ const Header = () => {
 
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto custom-nav">
-                        <Nav.Link as={NavLink} to="/" className="mx-2 fw-semibold">Trang chủ</Nav.Link>
-                        <Nav.Link as={NavLink} to="/dat-lich" className="mx-2 fw-semibold">Đặt lịch</Nav.Link>
                         <Nav.Link as={NavLink} to="/medicine-management" className="mx-2 fw-semibold">Kho thuốc</Nav.Link>
-                        <Nav.Link as={NavLink} to="/pets" className="mx-2 fw-semibold">
-                            Thú cưng của tôi
-                        </Nav.Link>
+                        <Nav.Link as={NavLink} to="/pets" className="mx-2 fw-semibold">Thú cưng của tôi</Nav.Link>
+                        <Nav.Link as={NavLink} to="/appointments" className="mx-2 fw-semibold">Lịch hẹn của tôi</Nav.Link>
                     </Nav>
 
 

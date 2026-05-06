@@ -11,27 +11,31 @@ export const endpoint = {
     'refresh': '/auth/refresh/',
     'logout': '/auth/logout/',
     'current_user': '/auth/profile/',
-    
+
     // Pets
     'pets': '/pets/',
     'pet_detail': (petId) => `/pets/${petId}/`,
-    
+
     // Clinics & Services
     'clinics': '/clinics/',
     'services': '/services/',
     'services_by_clinic': (clinicId) => `/clinics/${clinicId}/services/`,
-    
+
     // Appointments
     'appointments': '/appointments/',
     'appointment_detail': (appId) => `/appointments/${appId}/`,
     'appointment_confirm': (appId) => `/appointments/${appId}/confirm/`,
-    
+    'appointment_check_in': (appId) => `/appointments/${appId}/check-in/`,
+    'appointment_start': (appId) => `/appointments/${appId}/start/`,
+
     // Medicines & Prescriptions
     'medicines': '/medicines/',
     'prescriptions_by_record': (recordId) => `/medical-records/${recordId}/prescription/`,
-    
+
     // Medical Records
     'medical_records_by_pet': (petId) => `/pets/${petId}/medical-records/`,
+
+    'owner_medical_records': (recordId) => `/owner/medical-records/${recordId}/`,
 };
 
 // Instance cho các request công khai (Login, Register)

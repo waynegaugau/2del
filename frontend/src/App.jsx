@@ -22,11 +22,12 @@ import Home from "./component/Home";
 import Register from "./component/Register";
 import Login from "./component/Login";
 import Pet from "./component/Pet";
+import Booking from "./component/Booking";
+import MyAppointments from "./component/MyAppointments";
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
 // import Calendar from "./component/findDoctor/Calendar";
-// import Booking from "./component/bookDoctor/Booking";
 // import PaymentMethod from "./component/PaymentMethod";
 // import PaymentReturn from "./component/PaymentReturn";
 // import Invoice from "./component/Invoice";
@@ -59,17 +60,17 @@ const App = () => {
           <Container fluid className="p-0">
             <MyToaster />
             {/* Component Toaster của react-hot-toast để hiển thị thông báo */}
-            <Toaster position="top-right" /> 
+            <Toaster position="top-right" />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/pets" element={<Pet />} />
+              <Route path="/booking" element={<Booking />} />
+              <Route path="/appointments" element={<MyAppointments />} />
               {/* <Route path="/doctorAvailability" element={<DoctorAvailability />} />
               <Route path="/updateAppointment" element={<AppointmentUpdate />} />
-              <Route path="/appointment" element={<Appointment />} />
               <Route path="/calendar" element={<Calendar />} />
-              <Route path="/booking" element={<Booking />} />
               <Route path="/payment-method" element={<PaymentMethod />} />
               <Route path="/payment-return" element={<PaymentReturn />} />
               <Route path="/invoice" element={<Invoice />} />

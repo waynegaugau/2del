@@ -46,7 +46,7 @@ const Home = () => {
                                 variant="dark" 
                                 size="lg" 
                                 className="px-5 py-2 rounded-pill fw-bold hero-btn-custom"
-                                onClick={() => navigate('/dat-lich')}
+                                onClick={() => navigate('/booking')}
                             >
                                 Đặt lịch ngay
                             </Button>
