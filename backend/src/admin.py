@@ -10,6 +10,7 @@ from src.models import (
     MedicalRecord,
     Medicine,
     Pet,
+    Payment,
     Prescription,
     PrescriptionItem,
     Service,
@@ -345,6 +346,52 @@ class PrescriptionAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "appointment",
+        "owner",
+        "clinic",
+        "formatted_amount",
+        "method",
+        "status",
+        "paid_at",
+        "created_at",
+    )
+    search_fields = (
+        "appointment__id",
+        "owner__username",
+        "owner__full_name",
+        "clinic__name",
+        "transaction_code",
+    )
+    list_filter = ("status", "method", "clinic", "paid_at", "created_at")
+    readonly_fields = (
+        "appointment",
+        "owner",
+        "clinic",
+        "amount",
+        "method",
+        "status",
+        "paid_at",
+        "transaction_code",
+        "note",
+        "created_at",
+        "updated_at",
+    )
+
+    @admin.display(description="Số tiền")
+    def formatted_amount(self, obj):
+        return f"{obj.amount:,.0f} VND".replace(",", ".")
 
     def has_add_permission(self, request):
         return False

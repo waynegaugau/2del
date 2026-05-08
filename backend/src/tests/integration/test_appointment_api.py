@@ -1,6 +1,7 @@
 from datetime import timedelta
+from types import SimpleNamespace
 
-from django.test import TestCase
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -9,175 +10,296 @@ from rest_framework.test import APIClient
 from src.models import Appointment, Clinic, Pet, Service, User
 
 
-class AppointmentAPITests(TestCase):
-    # Shared Arrange: API client, users, clinics, service, and pets.
-    def setUp(self):
-        self.client = APIClient()
-        self.owner = User.objects.create_user(
-            username="owner",
-            email="owner@example.com",
-            password="password123",
-            full_name="Pet Owner",
-        )
-        self.other_owner = User.objects.create_user(
-            username="other_owner",
-            email="other-owner@example.com",
-            password="password123",
-            full_name="Other Owner",
-        )
-        self.clinic = Clinic.objects.create(
-            name="Clinic A",
-            address="123 Street",
-        )
-        self.other_clinic = Clinic.objects.create(
-            name="Clinic B",
-            address="456 Street",
-        )
-        self.staff = User.objects.create_user(
-            username="staff",
-            email="staff@example.com",
-            password="password123",
-            full_name="Clinic Staff",
-            role=User.ROLE_CLINIC_STAFF,
-            clinic=self.clinic,
-        )
-        self.other_staff = User.objects.create_user(
-            username="other_staff",
-            email="other-staff@example.com",
-            password="password123",
-            full_name="Other Clinic Staff",
-            role=User.ROLE_CLINIC_STAFF,
-            clinic=self.other_clinic,
-        )
-        self.service = Service.objects.create(
-            clinic=self.clinic,
-            name="General Exam",
-            service_type=Service.SERVICE_EXAM,
-            price=100000,
-            duration_minutes=60,
-        )
-        self.pet = Pet.objects.create(
-            owner=self.owner,
-            name="Milu",
-            species=Pet.SPECIES_DOG,
-            gender=Pet.GENDER_MALE,
-        )
-        self.other_pet = Pet.objects.create(
-            owner=self.other_owner,
-            name="Mina",
-            species=Pet.SPECIES_CAT,
-            gender=Pet.GENDER_FEMALE,
-        )
+pytestmark = pytest.mark.django_db
 
-    def authenticate(self, user):
-        self.client.force_authenticate(user=user)
 
-    def appointment_payload(self, appointment_time=None):
-        return {
-            "pet_id": self.pet.id,
-            "clinic_id": self.clinic.id,
-            "service_id": self.service.id,
-            "appointment_time": appointment_time or timezone.now() + timedelta(days=1),
-            "note": "Regular checkup",
-        }
+@pytest.fixture
+def appointment_context():
+    owner = User.objects.create_user(
+        username="owner",
+        email="owner@example.com",
+        password="password123",
+        full_name="Pet Owner",
+    )
+    other_owner = User.objects.create_user(
+        username="other_owner",
+        email="other-owner@example.com",
+        password="password123",
+        full_name="Other Owner",
+    )
+    clinic = Clinic.objects.create(name="Clinic A", address="123 Street")
+    other_clinic = Clinic.objects.create(name="Clinic B", address="456 Street")
+    staff = User.objects.create_user(
+        username="staff",
+        email="staff@example.com",
+        password="password123",
+        full_name="Clinic Staff",
+        role=User.ROLE_CLINIC_STAFF,
+        clinic=clinic,
+    )
+    other_staff = User.objects.create_user(
+        username="other_staff",
+        email="other-staff@example.com",
+        password="password123",
+        full_name="Other Clinic Staff",
+        role=User.ROLE_CLINIC_STAFF,
+        clinic=other_clinic,
+    )
+    service = Service.objects.create(
+        clinic=clinic,
+        name="General Exam",
+        service_type=Service.SERVICE_EXAM,
+        price=100000,
+        duration_minutes=60,
+    )
+    pet = Pet.objects.create(
+        owner=owner,
+        name="Milu",
+        species=Pet.SPECIES_DOG,
+        gender=Pet.GENDER_MALE,
+    )
+    other_pet = Pet.objects.create(
+        owner=other_owner,
+        name="Mina",
+        species=Pet.SPECIES_CAT,
+        gender=Pet.GENDER_FEMALE,
+    )
+    return SimpleNamespace(
+        client=APIClient(),
+        owner=owner,
+        other_owner=other_owner,
+        clinic=clinic,
+        other_clinic=other_clinic,
+        staff=staff,
+        other_staff=other_staff,
+        service=service,
+        pet=pet,
+        other_pet=other_pet,
+    )
 
-    def create_appointment(self, owner=None, pet=None, appointment_time=None):
-        return Appointment.objects.create(
-            owner=owner or self.owner,
-            pet=pet or self.pet,
-            clinic=self.clinic,
-            service=self.service,
-            appointment_time=appointment_time or timezone.now() + timedelta(days=1),
-            status=Appointment.STATUS_PENDING,
-        )
 
-    def test_pet_owner_can_create_appointment(self):
-        # Arrange
-        self.authenticate(self.owner)
+def authenticate(ctx, user):
+    ctx.client.force_authenticate(user=user)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-list-create"),
-            self.appointment_payload(),
-            format="json",
-        )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(response.data["success"])
-        self.assertEqual(response.data["data"]["owner"], self.owner.id)
-        self.assertEqual(response.data["data"]["pet"], self.pet.id)
-        self.assertEqual(response.data["data"]["status"], Appointment.STATUS_PENDING)
-        self.assertEqual(Appointment.objects.count(), 1)
+def appointment_payload(ctx, appointment_time=None):
+    return {
+        "pet_id": ctx.pet.id,
+        "clinic_id": ctx.clinic.id,
+        "service_id": ctx.service.id,
+        "appointment_time": appointment_time or timezone.now() + timedelta(days=1),
+        "note": "Regular checkup",
+    }
 
-    def test_pet_owner_cannot_create_appointment_with_time_conflict(self):
-        # Arrange
-        appointment_time = timezone.now() + timedelta(days=1)
-        self.create_appointment(appointment_time=appointment_time)
-        self.authenticate(self.owner)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-list-create"),
-            self.appointment_payload(
-                appointment_time=appointment_time + timedelta(minutes=30),
-            ),
-            format="json",
-        )
+def create_appointment(ctx, owner=None, pet=None, appointment_time=None):
+    return Appointment.objects.create(
+        owner=owner or ctx.owner,
+        pet=pet or ctx.pet,
+        clinic=ctx.clinic,
+        service=ctx.service,
+        appointment_time=appointment_time or timezone.now() + timedelta(days=1),
+        status=Appointment.STATUS_PENDING,
+    )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(response.data["success"])
-        self.assertEqual(Appointment.objects.count(), 1)
 
-    def test_staff_can_confirm_appointment_in_same_clinic(self):
-        # Arrange
-        appointment = self.create_appointment()
-        self.authenticate(self.staff)
+def test_pet_owner_can_create_appointment(appointment_context):
+    authenticate(appointment_context, appointment_context.owner)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-confirm", kwargs={"appointment_id": appointment.id}),
-            format="json",
-        )
+    response = appointment_context.client.post(
+        reverse("appointment-list-create"),
+        appointment_payload(appointment_context),
+        format="json",
+    )
 
-        # Assert
-        appointment.refresh_from_db()
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.data["success"] is True
+    assert response.data["data"]["owner"] == appointment_context.owner.id
+    assert response.data["data"]["pet"] == appointment_context.pet.id
+    assert response.data["data"]["status"] == Appointment.STATUS_PENDING
+    assert Appointment.objects.count() == 1
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data["success"])
-        self.assertEqual(response.data["data"]["status"], Appointment.STATUS_CONFIRMED)
-        self.assertEqual(appointment.status, Appointment.STATUS_CONFIRMED)
 
-    def test_staff_from_other_clinic_cannot_confirm_appointment(self):
-        # Arrange
-        appointment = self.create_appointment()
-        self.authenticate(self.other_staff)
+def test_pet_owner_cannot_create_appointment_with_time_conflict(appointment_context):
+    appointment_time = timezone.now() + timedelta(days=1)
+    create_appointment(appointment_context, appointment_time=appointment_time)
+    authenticate(appointment_context, appointment_context.owner)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-confirm", kwargs={"appointment_id": appointment.id}),
-            format="json",
-        )
+    response = appointment_context.client.post(
+        reverse("appointment-list-create"),
+        appointment_payload(
+            appointment_context,
+            appointment_time=appointment_time + timedelta(minutes=30),
+        ),
+        format="json",
+    )
 
-        # Assert
-        appointment.refresh_from_db()
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data["success"] is False
+    assert Appointment.objects.count() == 1
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertFalse(response.data["success"])
-        self.assertEqual(appointment.status, Appointment.STATUS_PENDING)
 
-    def test_pet_owner_can_list_only_their_appointments(self):
-        # Arrange
-        owner_appointment = self.create_appointment()
-        self.create_appointment(owner=self.other_owner, pet=self.other_pet)
-        self.authenticate(self.owner)
+def test_staff_can_confirm_appointment_in_same_clinic(appointment_context):
+    appointment = create_appointment(appointment_context)
+    authenticate(appointment_context, appointment_context.staff)
 
-        # Act
-        response = self.client.get(reverse("appointment-list-create"))
+    response = appointment_context.client.post(
+        reverse("appointment-confirm", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data["success"])
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["id"], owner_appointment.id)
+    appointment.refresh_from_db()
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["success"] is True
+    assert response.data["data"]["status"] == Appointment.STATUS_CONFIRMED
+    assert appointment.status == Appointment.STATUS_CONFIRMED
+
+
+def test_staff_from_other_clinic_cannot_confirm_appointment(appointment_context):
+    appointment = create_appointment(appointment_context)
+    authenticate(appointment_context, appointment_context.other_staff)
+
+    response = appointment_context.client.post(
+        reverse("appointment-confirm", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+
+    appointment.refresh_from_db()
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.data["success"] is False
+    assert appointment.status == Appointment.STATUS_PENDING
+
+
+def test_pet_owner_can_list_only_their_appointments(appointment_context):
+    owner_appointment = create_appointment(appointment_context)
+    create_appointment(
+        appointment_context,
+        owner=appointment_context.other_owner,
+        pet=appointment_context.other_pet,
+    )
+    authenticate(appointment_context, appointment_context.owner)
+
+    response = appointment_context.client.get(reverse("appointment-list-create"))
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["success"] is True
+    assert len(response.data["data"]) == 1
+    assert response.data["data"][0]["id"] == owner_appointment.id
+
+
+def test_pet_owner_can_view_update_and_cancel_pending_appointment(appointment_context):
+    appointment = create_appointment(appointment_context)
+    new_time = timezone.now() + timedelta(days=2)
+    authenticate(appointment_context, appointment_context.owner)
+
+    detail_response = appointment_context.client.get(
+        reverse("appointment-detail", kwargs={"appointment_id": appointment.id}),
+    )
+    update_response = appointment_context.client.put(
+        reverse("appointment-detail", kwargs={"appointment_id": appointment.id}),
+        {
+            "appointment_time": new_time,
+            "note": "Updated note",
+        },
+        format="json",
+    )
+    cancel_response = appointment_context.client.delete(
+        reverse("appointment-detail", kwargs={"appointment_id": appointment.id}),
+    )
+
+    appointment.refresh_from_db()
+    assert detail_response.status_code == status.HTTP_200_OK
+    assert detail_response.data["data"]["id"] == appointment.id
+    assert update_response.status_code == status.HTTP_200_OK
+    assert update_response.data["data"]["note"] == "Updated note"
+    assert cancel_response.status_code == status.HTTP_200_OK
+    assert appointment.status == Appointment.STATUS_CANCELLED
+
+
+def test_pet_owner_cannot_view_another_owners_appointment(appointment_context):
+    appointment = create_appointment(
+        appointment_context,
+        owner=appointment_context.other_owner,
+        pet=appointment_context.other_pet,
+    )
+    authenticate(appointment_context, appointment_context.owner)
+
+    response = appointment_context.client.get(
+        reverse("appointment-detail", kwargs={"appointment_id": appointment.id}),
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data["success"] is False
+
+
+def test_staff_can_list_and_view_same_clinic_appointments(appointment_context):
+    appointment = create_appointment(appointment_context)
+    authenticate(appointment_context, appointment_context.staff)
+
+    list_response = appointment_context.client.get(reverse("appointment-clinic-list"))
+    detail_response = appointment_context.client.get(
+        reverse("appointment-clinic-detail", kwargs={"appointment_id": appointment.id}),
+    )
+
+    assert list_response.status_code == status.HTTP_200_OK
+    assert len(list_response.data["data"]) == 1
+    assert detail_response.status_code == status.HTTP_200_OK
+    assert detail_response.data["data"]["id"] == appointment.id
+
+
+def test_staff_from_other_clinic_cannot_view_clinic_appointment_detail(appointment_context):
+    appointment = create_appointment(appointment_context)
+    authenticate(appointment_context, appointment_context.other_staff)
+
+    response = appointment_context.client.get(
+        reverse("appointment-clinic-detail", kwargs={"appointment_id": appointment.id}),
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.data["success"] is False
+
+
+def test_staff_can_move_appointment_through_api_service_flow(appointment_context):
+    appointment = create_appointment(appointment_context)
+    authenticate(appointment_context, appointment_context.staff)
+
+    confirm_response = appointment_context.client.post(
+        reverse("appointment-confirm", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+    check_in_response = appointment_context.client.post(
+        reverse("appointment-check-in", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+    start_response = appointment_context.client.post(
+        reverse("appointment-start", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+    complete_response = appointment_context.client.post(
+        reverse("appointment-complete", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+
+    appointment.refresh_from_db()
+    assert confirm_response.status_code == status.HTTP_200_OK
+    assert check_in_response.status_code == status.HTTP_200_OK
+    assert start_response.status_code == status.HTTP_200_OK
+    assert complete_response.status_code == status.HTTP_200_OK
+    assert appointment.status == Appointment.STATUS_COMPLETED
+
+
+def test_staff_can_mark_confirmed_appointment_as_no_show(appointment_context):
+    appointment = create_appointment(appointment_context)
+    appointment.status = Appointment.STATUS_CONFIRMED
+    appointment.save()
+    authenticate(appointment_context, appointment_context.staff)
+
+    response = appointment_context.client.post(
+        reverse("appointment-no-show", kwargs={"appointment_id": appointment.id}),
+        format="json",
+    )
+
+    appointment.refresh_from_db()
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["success"] is True
+    assert appointment.status == Appointment.STATUS_NO_SHOW

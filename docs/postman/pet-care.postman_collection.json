@@ -1,0 +1,1206 @@
+{
+  "info": {
+    "_postman_id": "55312b64-fdbb-4b72-9296-6d25ad8bb001",
+    "name": "Pet Care API",
+    "description": "End-to-end Postman collection for the Pet Care backend. Run requests in order after setting admin_username and admin_password in the environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('run_suffix')) {",
+          "  const suffix = Date.now().toString();",
+          "  pm.environment.set('run_suffix', suffix);",
+          "  pm.environment.set('owner_username', `owner_${suffix}`);",
+          "  pm.environment.set('owner_email', `owner_${suffix}@example.com`);",
+          "  pm.environment.set('staff_username', `staff_${suffix}`);",
+          "  pm.environment.set('staff_email', `staff_${suffix}@example.com`);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) {",
+                  "  pm.environment.set('admin_token', json.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Owner registered', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) {",
+                  "  pm.environment.set('owner_id', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{owner_username}}\",\n  \"email\": \"{{owner_email}}\",\n  \"password\": \"{{owner_password}}\",\n  \"full_name\": \"Postman Owner {{run_suffix}}\",\n  \"phone\": \"0900000000\",\n  \"address\": \"Ho Chi Minh City\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Owner login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) {",
+                  "  pm.environment.set('owner_token', json.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{owner_username}}\",\n  \"password\": \"{{owner_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Admin Setup",
+      "item": [
+        {
+          "name": "Create Clinic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clinic created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('clinic_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Clinic {{run_suffix}}\",\n  \"address\": \"123 Test Street\",\n  \"phone\": \"0900000000\",\n  \"email\": \"clinic_{{run_suffix}}@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/clinics/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Service created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('service_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinic_id\": {{clinic_id}},\n  \"name\": \"General Exam {{run_suffix}}\",\n  \"service_type\": \"EXAM\",\n  \"description\": \"General health examination\",\n  \"price\": \"100000.00\",\n  \"duration_minutes\": 60\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/services/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Staff created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('staff_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{staff_username}}\",\n  \"email\": \"{{staff_email}}\",\n  \"password\": \"{{staff_password}}\",\n  \"full_name\": \"Postman Staff {{run_suffix}}\",\n  \"phone\": \"0911111111\",\n  \"address\": \"Clinic Staff Address\",\n  \"clinic_id\": {{clinic_id}},\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/staffs/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "staffs",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Staff login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('staff_token', json.data.access_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{staff_username}}\",\n  \"password\": \"{{staff_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Pet Owner - Pets",
+      "item": [
+        {
+          "name": "Create Pet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Pet created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('pet_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Milu {{run_suffix}}\",\n  \"species\": \"DOG\",\n  \"breed\": \"Poodle\",\n  \"gender\": \"MALE\",\n  \"birth_date\": \"2022-01-15\",\n  \"weight\": \"4.50\",\n  \"note\": \"Created from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pets/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Owner Pets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pets/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pet Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pets/{{pet_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                "{{pet_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Appointment Flow",
+      "item": [
+        {
+          "name": "List Clinics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clinics/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Services By Clinic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clinics/{{clinic_id}}/services/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                "{{clinic_id}}",
+                "services",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Appointment",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);",
+                  "pm.environment.set('appointment_time', future.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Appointment created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('appointment_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pet_id\": {{pet_id}},\n  \"clinic_id\": {{clinic_id}},\n  \"service_id\": {{service_id}},\n  \"appointment_time\": \"{{appointment_time}}\",\n  \"note\": \"Regular checkup from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/appointments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner List Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff List Clinic Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/clinic/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "clinic",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Confirm Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/confirm/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "confirm",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Check In Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/check-in/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "check-in",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Start Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/start/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "start",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Medical Records",
+      "item": [
+        {
+          "name": "Create Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Medical record created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('medical_record_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"Coughing and low appetite\",\n  \"diagnosis\": \"Mild respiratory infection\",\n  \"treatment\": \"Medication and rest\",\n  \"note\": \"Created from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/medical-record/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "medical-record",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Medical Record By Appointment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/medical-record/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "medical-record",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner List Pet Medical Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/owner/pets/{{pet_id}}/medical-records/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "owner",
+                "pets",
+                "{{pet_id}}",
+                "medical-records",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Medicines and Prescriptions",
+      "item": [
+        {
+          "name": "Create Medicine",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Medicine created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('medicine_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amoxicillin {{run_suffix}}\",\n  \"unit\": \"tablet\",\n  \"description\": \"Antibiotic\",\n  \"stock_quantity\": 100,\n  \"price\": \"5000.00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/medicines/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medicines",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Prescription created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('prescription_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Take medicine after meals\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/medical-records/{{medical_record_id}}/prescription/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medical-records",
+                "{{medical_record_id}}",
+                "prescription",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Prescription Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Prescription item created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('prescription_item_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicine_id\": {{medicine_id}},\n  \"quantity\": 2,\n  \"dosage\": \"1 tablet\",\n  \"frequency\": \"Twice daily\",\n  \"duration_days\": 5,\n  \"instruction\": \"After meal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/prescriptions/{{prescription_id}}/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescription_id}}",
+                "items",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prescription By Medical Record",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medical-records/{{medical_record_id}}/prescription/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medical-records",
+                "{{medical_record_id}}",
+                "prescription",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Get Prescription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/owner/medical-records/{{medical_record_id}}/prescription/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "owner",
+                "medical-records",
+                "{{medical_record_id}}",
+                "prescription",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Complete Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/complete/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "complete",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 Pet Owner - Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Payment created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('payment_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_id\": {{appointment_id}},\n  \"method\": \"MOCK_ONLINE\",\n  \"note\": \"Online mock payment from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}/confirm/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "{{payment_id}}",
+                "confirm",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "{{payment_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Admin - Reports",
+      "item": [
+        {
+          "name": "Report Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/reports/overview/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "overview",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revenue Report By Day",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/reports/revenue/?group_by=day",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "revenue",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "group_by",
+                  "value": "day"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clinic Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/reports/clinics/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "clinics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
