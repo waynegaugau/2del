@@ -1,6 +1,7 @@
 from datetime import timedelta
+from types import SimpleNamespace
 
-from django.test import TestCase
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -9,182 +10,203 @@ from rest_framework.test import APIClient
 from src.models import Appointment, Clinic, MedicalRecord, Pet, Service, User
 
 
-class MedicalRecordAPITests(TestCase):
-    # Shared Arrange: API client, users, clinics, service, and pets.
-    def setUp(self):
-        self.client = APIClient()
-        self.owner = User.objects.create_user(
-            username="owner",
-            email="owner@example.com",
-            password="password123",
-            full_name="Pet Owner",
-        )
-        self.other_owner = User.objects.create_user(
-            username="other_owner",
-            email="other-owner@example.com",
-            password="password123",
-            full_name="Other Owner",
-        )
-        self.clinic = Clinic.objects.create(
-            name="Clinic A",
-            address="123 Street",
-        )
-        self.other_clinic = Clinic.objects.create(
-            name="Clinic B",
-            address="456 Street",
-        )
-        self.staff = User.objects.create_user(
-            username="staff",
-            email="staff@example.com",
-            password="password123",
-            full_name="Clinic Staff",
-            role=User.ROLE_CLINIC_STAFF,
-            clinic=self.clinic,
-        )
-        self.other_staff = User.objects.create_user(
-            username="other_staff",
-            email="other-staff@example.com",
-            password="password123",
-            full_name="Other Clinic Staff",
-            role=User.ROLE_CLINIC_STAFF,
-            clinic=self.other_clinic,
-        )
-        self.service = Service.objects.create(
-            clinic=self.clinic,
-            name="General Exam",
-            service_type=Service.SERVICE_EXAM,
-            price=100000,
-            duration_minutes=60,
-        )
-        self.pet = Pet.objects.create(
-            owner=self.owner,
-            name="Milu",
-            species=Pet.SPECIES_DOG,
-            gender=Pet.GENDER_MALE,
-        )
-        self.other_pet = Pet.objects.create(
-            owner=self.other_owner,
-            name="Mina",
-            species=Pet.SPECIES_CAT,
-            gender=Pet.GENDER_FEMALE,
-        )
+pytestmark = pytest.mark.django_db
 
-    def authenticate(self, user):
-        self.client.force_authenticate(user=user)
 
-    def medical_record_payload(self):
-        return {
-            "symptoms": "Coughing",
-            "diagnosis": "Mild respiratory infection",
-            "treatment": "Rest and medication",
-            "note": "Follow up in 7 days",
-        }
+@pytest.fixture
+def medical_record_context():
+    owner = User.objects.create_user(
+        username="owner",
+        email="owner@example.com",
+        password="password123",
+        full_name="Pet Owner",
+    )
+    other_owner = User.objects.create_user(
+        username="other_owner",
+        email="other-owner@example.com",
+        password="password123",
+        full_name="Other Owner",
+    )
+    clinic = Clinic.objects.create(name="Clinic A", address="123 Street")
+    other_clinic = Clinic.objects.create(name="Clinic B", address="456 Street")
+    staff = User.objects.create_user(
+        username="staff",
+        email="staff@example.com",
+        password="password123",
+        full_name="Clinic Staff",
+        role=User.ROLE_CLINIC_STAFF,
+        clinic=clinic,
+    )
+    other_staff = User.objects.create_user(
+        username="other_staff",
+        email="other-staff@example.com",
+        password="password123",
+        full_name="Other Clinic Staff",
+        role=User.ROLE_CLINIC_STAFF,
+        clinic=other_clinic,
+    )
+    service = Service.objects.create(
+        clinic=clinic,
+        name="General Exam",
+        service_type=Service.SERVICE_EXAM,
+        price=100000,
+        duration_minutes=60,
+    )
+    pet = Pet.objects.create(
+        owner=owner,
+        name="Milu",
+        species=Pet.SPECIES_DOG,
+        gender=Pet.GENDER_MALE,
+    )
+    other_pet = Pet.objects.create(
+        owner=other_owner,
+        name="Mina",
+        species=Pet.SPECIES_CAT,
+        gender=Pet.GENDER_FEMALE,
+    )
 
-    def create_appointment(self, owner=None, pet=None, status_value=Appointment.STATUS_CHECKED_IN):
-        return Appointment.objects.create(
-            owner=owner or self.owner,
-            pet=pet or self.pet,
-            clinic=self.clinic,
-            service=self.service,
-            appointment_time=timezone.now() + timedelta(days=1),
-            status=status_value,
-        )
+    return SimpleNamespace(
+        client=APIClient(),
+        owner=owner,
+        other_owner=other_owner,
+        clinic=clinic,
+        other_clinic=other_clinic,
+        staff=staff,
+        other_staff=other_staff,
+        service=service,
+        pet=pet,
+        other_pet=other_pet,
+    )
 
-    def create_medical_record(self, owner=None, pet=None):
-        appointment = self.create_appointment(owner=owner, pet=pet)
-        return MedicalRecord.objects.create(
-            appointment=appointment,
-            pet=appointment.pet,
-            clinic=appointment.clinic,
-            staff=self.staff,
-            symptoms="Coughing",
-            diagnosis="Mild respiratory infection",
-            treatment="Rest",
-            note="",
-        )
 
-    def test_staff_can_create_medical_record_for_checked_in_appointment(self):
-        # Arrange
-        appointment = self.create_appointment(status_value=Appointment.STATUS_CHECKED_IN)
-        self.authenticate(self.staff)
+def authenticate(ctx, user):
+    ctx.client.force_authenticate(user=user)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
-            self.medical_record_payload(),
-            format="json",
-        )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(response.data["success"])
-        self.assertEqual(response.data["data"]["appointment_id"], appointment.id)
-        self.assertEqual(response.data["data"]["pet_id"], self.pet.id)
-        self.assertEqual(response.data["data"]["clinic_id"], self.clinic.id)
-        self.assertEqual(response.data["data"]["staff_id"], self.staff.id)
-        self.assertEqual(MedicalRecord.objects.count(), 1)
+def medical_record_payload():
+    return {
+        "symptoms": "Coughing",
+        "diagnosis": "Mild respiratory infection",
+        "treatment": "Rest and medication",
+        "note": "Follow up in 7 days",
+    }
 
-    def test_staff_cannot_create_medical_record_for_pending_appointment(self):
-        # Arrange
-        appointment = self.create_appointment(status_value=Appointment.STATUS_PENDING)
-        self.authenticate(self.staff)
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
-            self.medical_record_payload(),
-            format="json",
-        )
+def create_appointment(ctx, owner=None, pet=None, status_value=Appointment.STATUS_CHECKED_IN):
+    return Appointment.objects.create(
+        owner=owner or ctx.owner,
+        pet=pet or ctx.pet,
+        clinic=ctx.clinic,
+        service=ctx.service,
+        appointment_time=timezone.now() + timedelta(days=1),
+        status=status_value,
+    )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(response.data["success"])
-        self.assertEqual(MedicalRecord.objects.count(), 0)
 
-    def test_staff_from_other_clinic_cannot_create_medical_record(self):
-        # Arrange
-        appointment = self.create_appointment(status_value=Appointment.STATUS_CHECKED_IN)
-        self.authenticate(self.other_staff)
+def create_medical_record(ctx, owner=None, pet=None):
+    appointment = create_appointment(ctx, owner=owner, pet=pet)
+    return MedicalRecord.objects.create(
+        appointment=appointment,
+        pet=appointment.pet,
+        clinic=appointment.clinic,
+        staff=ctx.staff,
+        symptoms="Coughing",
+        diagnosis="Mild respiratory infection",
+        treatment="Rest",
+        note="",
+    )
 
-        # Act
-        response = self.client.post(
-            reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
-            self.medical_record_payload(),
-            format="json",
-        )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertFalse(response.data["success"])
-        self.assertEqual(MedicalRecord.objects.count(), 0)
+def test_staff_can_create_medical_record_for_checked_in_appointment(medical_record_context):
+    appointment = create_appointment(
+        medical_record_context,
+        status_value=Appointment.STATUS_CHECKED_IN,
+    )
+    authenticate(medical_record_context, medical_record_context.staff)
 
-    def test_pet_owner_can_list_medical_records_for_their_pet(self):
-        # Arrange
-        record = self.create_medical_record()
-        self.create_medical_record(owner=self.other_owner, pet=self.other_pet)
-        self.authenticate(self.owner)
+    response = medical_record_context.client.post(
+        reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
+        medical_record_payload(),
+        format="json",
+    )
 
-        # Act
-        response = self.client.get(
-            reverse("owner-pet-medical-record-list", kwargs={"pet_id": self.pet.id}),
-        )
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.data["success"] is True
+    assert response.data["data"]["appointment_id"] == appointment.id
+    assert response.data["data"]["pet_id"] == medical_record_context.pet.id
+    assert response.data["data"]["clinic_id"] == medical_record_context.clinic.id
+    assert response.data["data"]["staff_id"] == medical_record_context.staff.id
+    assert MedicalRecord.objects.count() == 1
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data["success"])
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["id"], record.id)
 
-    def test_pet_owner_cannot_get_medical_record_detail_for_another_owner_pet(self):
-        # Arrange
-        record = self.create_medical_record(owner=self.other_owner, pet=self.other_pet)
-        self.authenticate(self.owner)
+def test_staff_cannot_create_medical_record_for_pending_appointment(medical_record_context):
+    appointment = create_appointment(
+        medical_record_context,
+        status_value=Appointment.STATUS_PENDING,
+    )
+    authenticate(medical_record_context, medical_record_context.staff)
 
-        # Act
-        response = self.client.get(
-            reverse("owner-medical-record-detail", kwargs={"record_id": record.id}),
-        )
+    response = medical_record_context.client.post(
+        reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
+        medical_record_payload(),
+        format="json",
+    )
 
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertFalse(response.data["success"])
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data["success"] is False
+    assert MedicalRecord.objects.count() == 0
+
+
+def test_staff_from_other_clinic_cannot_create_medical_record(medical_record_context):
+    appointment = create_appointment(
+        medical_record_context,
+        status_value=Appointment.STATUS_CHECKED_IN,
+    )
+    authenticate(medical_record_context, medical_record_context.other_staff)
+
+    response = medical_record_context.client.post(
+        reverse("appointment-medical-record", kwargs={"appointment_id": appointment.id}),
+        medical_record_payload(),
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.data["success"] is False
+    assert MedicalRecord.objects.count() == 0
+
+
+def test_pet_owner_can_list_medical_records_for_their_pet(medical_record_context):
+    record = create_medical_record(medical_record_context)
+    create_medical_record(
+        medical_record_context,
+        owner=medical_record_context.other_owner,
+        pet=medical_record_context.other_pet,
+    )
+    authenticate(medical_record_context, medical_record_context.owner)
+
+    response = medical_record_context.client.get(
+        reverse("owner-pet-medical-record-list", kwargs={"pet_id": medical_record_context.pet.id}),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["success"] is True
+    assert len(response.data["data"]) == 1
+    assert response.data["data"][0]["id"] == record.id
+
+
+def test_pet_owner_cannot_get_medical_record_detail_for_another_owner_pet(
+    medical_record_context,
+):
+    record = create_medical_record(
+        medical_record_context,
+        owner=medical_record_context.other_owner,
+        pet=medical_record_context.other_pet,
+    )
+    authenticate(medical_record_context, medical_record_context.owner)
+
+    response = medical_record_context.client.get(
+        reverse("owner-medical-record-detail", kwargs={"record_id": record.id}),
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.data["success"] is False
