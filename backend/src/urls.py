@@ -41,6 +41,16 @@ from src.controllers.prescription_controller import (
     PrescriptionItemDetailAPIView,
     PetOwnerMedicalRecordPrescriptionAPIView,
 )
+from src.controllers.payment_controller import (
+    PaymentConfirmAPIView,
+    PaymentDetailAPIView,
+    PaymentListCreateAPIView,
+)
+from src.controllers.report_controller import (
+    AdminClinicReportAPIView,
+    AdminReportOverviewAPIView,
+    AdminRevenueReportAPIView,
+)
 from src.controllers.clinic_controller import (
     ClinicListCreateAPIView,
     ClinicDetailAPIView,
@@ -57,6 +67,9 @@ urlpatterns = [
     path("auth/profile/", ProfileAPIView.as_view(), name="profile"),
     path("admin/staffs/", StaffAdminListCreateAPIView.as_view(), name="admin-staff-list-create"),
     path("admin/staffs/<int:staff_id>/", StaffAdminDetailAPIView.as_view(), name="admin-staff-detail"),
+    path("admin/reports/overview/", AdminReportOverviewAPIView.as_view(), name="admin-report-overview"),
+    path("admin/reports/revenue/", AdminRevenueReportAPIView.as_view(), name="admin-report-revenue"),
+    path("admin/reports/clinics/", AdminClinicReportAPIView.as_view(), name="admin-report-clinics"),
 
     # Pets
     path("pets/", PetListCreateAPIView.as_view(), name="pet-list-create"),
@@ -99,4 +112,9 @@ urlpatterns = [
     path("prescriptions/<int:prescription_id>/items/", PrescriptionItemListCreateAPIView.as_view(), name="prescription-item-list-create"),
     path("prescription-items/<int:item_id>/", PrescriptionItemDetailAPIView.as_view(), name="prescription-item-detail"),
     path("owner/medical-records/<int:medical_record_id>/prescription/", PetOwnerMedicalRecordPrescriptionAPIView.as_view(), name="owner-medical-record-prescription"),
+
+    # Payments
+    path("payments/", PaymentListCreateAPIView.as_view(), name="payment-list-create"),
+    path("payments/<int:payment_id>/", PaymentDetailAPIView.as_view(), name="payment-detail"),
+    path("payments/<int:payment_id>/confirm/", PaymentConfirmAPIView.as_view(), name="payment-confirm"),
 ]
