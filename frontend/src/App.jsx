@@ -24,6 +24,8 @@ import Login from "./component/Login";
 import Pet from "./component/Pet";
 import Booking from "./component/Booking";
 import MyAppointments from "./component/MyAppointments";
+import StaffAppointmentList from "./component/StaffAppointmentList";
+
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
@@ -68,16 +70,7 @@ const App = () => {
               <Route path="/pets" element={<Pet />} />
               <Route path="/booking" element={<Booking />} />
               <Route path="/appointments" element={<MyAppointments />} />
-              {/* <Route path="/doctorAvailability" element={<DoctorAvailability />} />
-              <Route path="/updateAppointment" element={<AppointmentUpdate />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/payment-method" element={<PaymentMethod />} />
-              <Route path="/payment-return" element={<PaymentReturn />} />
-              <Route path="/invoice" element={<Invoice />} />
-              <Route path="/editProfile" element={<EditProfile />} />
-              <Route path="/change-password" element={<ChangePassword />} />
-              <Route path="/select-specialty" element={<SpecialtyList />} />
-              <Route path="/medicine-management" element={<MedicineManagement />} /> */}
+              <Route path="/staff/appointments" element={<StaffAppointmentList />} />
             </Routes>
           </Container>
           <Footer />

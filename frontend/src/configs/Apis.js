@@ -21,21 +21,33 @@ export const endpoint = {
     'services': '/services/',
     'services_by_clinic': (clinicId) => `/clinics/${clinicId}/services/`,
 
-    // Appointments
+    // Appointments (Chung & Staff)
     'appointments': '/appointments/',
+    'staff_clinic_appointments': '/appointments/clinic/', // Mới bổ sung
     'appointment_detail': (appId) => `/appointments/${appId}/`,
     'appointment_confirm': (appId) => `/appointments/${appId}/confirm/`,
     'appointment_check_in': (appId) => `/appointments/${appId}/check-in/`,
     'appointment_start': (appId) => `/appointments/${appId}/start/`,
-
-    // Medicines & Prescriptions
-    'medicines': '/medicines/',
-    'prescriptions_by_record': (recordId) => `/medical-records/${recordId}/prescription/`,
+    'appointment_complete': (appId) => `/appointments/${appId}/complete/`, // Mới bổ sung
 
     // Medical Records
+    'appointment_medical_record': (appId) => `/appointments/${appId}/medical-record/`, // Dành cho Staff tạo record
+    'medical_record_detail': (recordId) => `/medical-records/${recordId}/`,
     'medical_records_by_pet': (petId) => `/pets/${petId}/medical-records/`,
 
-    'owner_medical_records': (recordId) => `/owner/medical-records/${recordId}/`,
+    // Medical Records dành cho Pet Owner
+    'owner_pet_medical_records': (petId) => `/owner/pets/${petId}/medical-records/`,
+    'owner_medical_record_detail': (recordId) => `/owner/medical-records/${recordId}/`,
+
+    // Medicines & Prescriptions (Staff)[cite: 23]
+    'medicines': '/medicines/',
+    'medicine_detail': (medId) => `/medicines/${medId}/`,
+    'medical_record_prescription': (recordId) => `/medical-records/${recordId}/prescription/`, 
+    'prescription_items': (presId) => `/prescriptions/${presId}/items/`, // Thêm thuốc vào đơn
+
+    // Prescriptions dành cho Pet Owner[cite: 23]
+    'owner_prescription_by_record': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
+    
 };
 
 // Instance cho các request công khai (Login, Register)

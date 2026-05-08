@@ -8,7 +8,7 @@ import ExaminationForm from "./ExaminationForm"; // Đảm bảo bạn đã tạ
 const StaffAppointmentList = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // 1. Đưa State vào bên trong Component
     const [selectedApp, setSelectedApp] = useState(null);
     const [showExam, setShowExam] = useState(false);
@@ -33,9 +33,22 @@ const StaffAppointmentList = () => {
         try {
             await authApis().post(actionEndpoint(id));
             toast.success(successMsg);
-            loadAppointments(); 
+            loadAppointments();
         } catch (ex) {
             toast.error(ex.response?.data?.message || "Thao tác thất bại");
+        }
+    };
+
+    const handleCancel = async (id) => {
+        if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này?")) {
+            try {
+                // Sử dụng endpoint no-show hoặc hủy tùy backend[cite: 23]
+                await authApis().post(endpoint['appointment_no_show'](id));
+                toast.success("Đã hủy lịch hẹn");
+                loadAppointments();
+            } catch (ex) {
+                toast.error("Không thể hủy lịch");
+            }
         }
     };
 
@@ -79,10 +92,15 @@ const StaffAppointmentList = () => {
                                 <td>{getStatusBadge(app.status)}</td>
                                 <td>
                                     {app.status === "PENDING" && (
-                                        <Button size="sm" variant="success" className="me-2"
-                                            onClick={() => updateStatus(app.id, endpoint['appointment_confirm'], "Đã xác nhận lịch")}>
-                                            Xác nhận
-                                        </Button>
+                                        <>
+                                            <Button size="sm" variant="success" className="me-2"
+                                                onClick={() => updateStatus(app.id, endpoint['appointment_confirm'], "Đã xác nhận")}>
+                                                Xác nhận
+                                            </Button>
+                                            <Button size="sm" variant="danger" onClick={() => handleCancel(app.id)}>
+                                                Hủy lịch
+                                            </Button>
+                                        </>
                                     )}
 
                                     {app.status === "CONFIRMED" && (
@@ -117,11 +135,11 @@ const StaffAppointmentList = () => {
 
             {/* 3. Thêm Component Modal vào cuối[cite: 24] */}
             {selectedApp && (
-                <ExaminationForm 
-                    appointment={selectedApp} 
-                    show={showExam} 
+                <ExaminationForm
+                    appointment={selectedApp}
+                    show={showExam}
                     onHide={() => setShowExam(false)}
-                    onComplete={loadAppointments} 
+                    onComplete={loadAppointments}
                 />
             )}
         </Container>

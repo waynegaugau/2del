@@ -3,11 +3,27 @@ import { Modal, Form, Button, Row, Col, Alert } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
 
+
+// // Gợi ý logic bổ sung cho Bước 2 trong ExaminationForm
+// const [medicines, setMedicines] = useState([]); // Danh sách thuốc từ kho
+// const [prescriptionId, setPrescriptionId] = useState(null);
+
+// // Hàm tạo đơn thuốc trắng ngay khi vào bước 2
+// const createPrescription = async () => {
+//     try {
+//         const res = await authApis().post(endpoint['medical_record_prescription'](recordId), { note: "" });
+//         setPrescriptionId(res.data.data.id || res.data.id);
+//         // Sau đó load danh sách thuốc để chọn
+//         const medRes = await authApis().get(endpoint['medicines']);
+//         setMedicines(medRes.data.data || medRes.data);
+//     } catch (ex) { toast.error("Không thể tạo đơn thuốc"); }
+// };
+
 const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
     const [step, setStep] = useState(1); // 1: Bệnh án, 2: Đơn thuốc
     const [recordId, setRecordId] = useState(null);
     const [loading, setLoading] = useState(false);
-    
+
     // State cho Hồ sơ bệnh án[cite: 15, 23]
     const [recordData, setRecordData] = useState({
         symptoms: "",
@@ -57,18 +73,18 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                     <Form onSubmit={handleSubmitRecord}>
                         <Form.Group className="mb-3">
                             <Form.Label className="fw-bold">Triệu chứng[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2} required 
-                                onChange={e => setRecordData({...recordData, symptoms: e.target.value})} />
+                            <Form.Control as="textarea" rows={2} required
+                                onChange={e => setRecordData({ ...recordData, symptoms: e.target.value })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label className="fw-bold">Chẩn đoán[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2} required 
-                                onChange={e => setRecordData({...recordData, diagnosis: e.target.value})} />
+                            <Form.Control as="textarea" rows={2} required
+                                onChange={e => setRecordData({ ...recordData, diagnosis: e.target.value })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label className="fw-bold">Hướng điều trị[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2} 
-                                onChange={e => setRecordData({...recordData, treatment: e.target.value})} />
+                            <Form.Control as="textarea" rows={2}
+                                onChange={e => setRecordData({ ...recordData, treatment: e.target.value })} />
                         </Form.Group>
                         <Button variant="primary" type="submit" className="w-100" disabled={loading}>
                             {loading ? "Đang lưu..." : "Lưu hồ sơ & Chuyển sang kê đơn"}
@@ -79,7 +95,7 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                         <Alert variant="success">Hồ sơ bệnh án đã được tạo thành công!</Alert>
                         <p>Bạn có muốn tiếp tục kê đơn thuốc cho bé không?</p>
                         <div className="d-flex justify-content-center gap-3">
-                            <Button variant="outline-primary" onClick={() => {/* Dẫn tới logic kê đơn chi tiết */}}>
+                            <Button variant="outline-primary" onClick={() => {/* Dẫn tới logic kê đơn chi tiết */ }}>
                                 + Thêm đơn thuốc[cite: 22]
                             </Button>
                             <Button variant="success" onClick={handleFinishAll}>
