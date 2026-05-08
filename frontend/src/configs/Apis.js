@@ -42,12 +42,28 @@ export const endpoint = {
     // Medicines & Prescriptions (Staff)[cite: 23]
     'medicines': '/medicines/',
     'medicine_detail': (medId) => `/medicines/${medId}/`,
-    'medical_record_prescription': (recordId) => `/medical-records/${recordId}/prescription/`, 
+    'medical_record_prescription': (recordId) => `/medical-records/${recordId}/prescription/`,
     'prescription_items': (presId) => `/prescriptions/${presId}/items/`, // Thêm thuốc vào đơn
+
+    'pet_medical_records': (petId) => `/pets/${petId}/medical-records/`,
+    'medical_record_detail': (recordId) => `/medical-records/${recordId}/`,
 
     // Prescriptions dành cho Pet Owner[cite: 23]
     'owner_prescription_by_record': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
-    
+    // Medical Records (Dành cho Owner - Backend đã có sẵn)
+    'owner_medical_record_detail': (recordId) => `/owner/medical-records/${recordId}/`,
+
+    // Prescriptions (Dành cho Owner - Backend đã có sẵn)
+    'owner_prescription_by_record': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
+
+    // Lấy Hồ sơ từ Lịch hẹn (Cho Staff)
+    'appointment_medical_record': (appId) => `/appointments/${appId}/medical-record/`,
+    // THÊM CÁC DÒNG NÀY (Dành cho Owner)
+    'owner_medical_record_by_app': (appId) => `/owner/appointments/${appId}/medical-record/`,
+    'owner_medical_record_detail': (recordId) => `/owner/medical-records/${recordId}/`,
+    'owner_medical_record_prescription': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
+
+
 };
 
 // Instance cho các request công khai (Login, Register)

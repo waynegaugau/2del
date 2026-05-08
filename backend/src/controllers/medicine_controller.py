@@ -57,3 +57,6 @@ class MedicineDetailAPIView(APIView):
         medicine = MedicineService.delete_medicine(request.user, medicine_id)
         output = MedicineSerializer(medicine)
         return success_response(output.data, "Xóa thuốc thành công")
+
+    def patch(self, request, medicine_id):
+        return self.put(request, medicine_id)

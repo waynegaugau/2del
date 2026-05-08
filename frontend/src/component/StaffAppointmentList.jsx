@@ -3,11 +3,14 @@ import { Container, Table, Button, Badge, Spinner, Card } from "react-bootstrap"
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
 import moment from "moment";
-import ExaminationForm from "./ExaminationForm"; // Đảm bảo bạn đã tạo file này
+import ExaminationForm from "./ExaminationForm";
+import MedicalRecordDetailModal from "./MedicalRecordDetailModal";
 
 const StaffAppointmentList = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showViewDetail, setShowViewDetail] = useState(false);
+    const [selectedRecordId, setSelectedRecordId] = useState(null);
 
     // 1. Đưa State vào bên trong Component
     const [selectedApp, setSelectedApp] = useState(null);
@@ -25,6 +28,8 @@ const StaffAppointmentList = () => {
         }
     };
 
+
+
     useEffect(() => {
         loadAppointments();
     }, []);
@@ -39,18 +44,18 @@ const StaffAppointmentList = () => {
         }
     };
 
-    const handleCancel = async (id) => {
-        if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này?")) {
-            try {
-                // Sử dụng endpoint no-show hoặc hủy tùy backend[cite: 23]
-                await authApis().post(endpoint['appointment_no_show'](id));
-                toast.success("Đã hủy lịch hẹn");
-                loadAppointments();
-            } catch (ex) {
-                toast.error("Không thể hủy lịch");
-            }
-        }
-    };
+    // const handleCancel = async (id) => {
+    //     if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này?")) {
+    //         try {
+    //             // Sử dụng endpoint no-show hoặc hủy tùy backend[cite: 23]
+    //             await authApis().post(endpoint['appointment_no_show'](id));
+    //             toast.success("Đã hủy lịch hẹn");
+    //             loadAppointments();
+    //         } catch (ex) {
+    //             toast.error("Không thể hủy lịch");
+    //         }
+    //     }
+    // };
 
     const getStatusBadge = (status) => {
         const statusMap = {
@@ -63,6 +68,18 @@ const StaffAppointmentList = () => {
         };
         const s = statusMap[status] || { bg: "light", text: status };
         return <Badge bg={s.bg}>{s.text}</Badge>;
+    };
+
+    // 2. Hàm lấy ID hồ sơ từ lịch hẹn
+    const handleViewRecord = async (appId) => {
+        try {
+            const res = await authApis().get(endpoint['appointment_medical_record'](appId));
+            const record = res.data.data || res.data;
+            setSelectedRecordId(record.id);
+            setShowViewDetail(true);
+        } catch (ex) {
+            toast.error("Không tìm thấy hồ sơ cho lịch hẹn này.");
+        }
     };
 
     if (loading) return <Container className="text-center mt-5"><Spinner animation="border" /></Container>;
@@ -97,9 +114,7 @@ const StaffAppointmentList = () => {
                                                 onClick={() => updateStatus(app.id, endpoint['appointment_confirm'], "Đã xác nhận")}>
                                                 Xác nhận
                                             </Button>
-                                            <Button size="sm" variant="danger" onClick={() => handleCancel(app.id)}>
-                                                Hủy lịch
-                                            </Button>
+
                                         </>
                                     )}
 
@@ -126,13 +141,26 @@ const StaffAppointmentList = () => {
                                             Nhập kết quả
                                         </Button>
                                     )}
+
+                                    {/* 3. THÊM NÚT XEM HỒ SƠ CHO COMPLETED */}
+                                    {app.status === "COMPLETED" && (
+                                        <Button size="sm" variant="info" className="text-white" onClick={() => handleViewRecord(app.id)}>
+                                            Xem hồ sơ
+                                        </Button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </Table>
             </Card>
-
+            {/* 4. CHÈN MODAL CHI TIẾT VÀO CUỐI CONTAINER */}
+            <MedicalRecordDetailModal
+                recordId={selectedRecordId}
+                show={showViewDetail}
+                onHide={() => setShowViewDetail(false)}
+            />
+            
             {/* 3. Thêm Component Modal vào cuối[cite: 24] */}
             {selectedApp && (
                 <ExaminationForm

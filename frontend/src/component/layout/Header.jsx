@@ -35,10 +35,7 @@ const Header = () => {
                                 <Nav.Link as={NavLink} to="/staff/appointments" className="mx-2 fw-semibold text-warning">
                                     Quản lý lịch hẹn
                                 </Nav.Link>
-                                <Nav.Link as={NavLink} to="/medicine-management" className="mx-2 fw-semibold">
-                                    Kho thuốc
-                                </Nav.Link>
-                            </>
+                                <Nav.Link as={NavLink} to="/staff/medicines">Quản lý thuốc</Nav.Link>                            </>
                         )}
 
                         {/* 3. Menu dành riêng cho chủ nuôi (PET_OWNER) */}

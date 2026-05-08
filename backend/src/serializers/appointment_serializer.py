@@ -9,7 +9,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
     pet_name = serializers.CharField(source="pet.name", read_only=True)
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
     service_name = serializers.CharField(source="service.name", read_only=True)
-
+    medical_record_id = serializers.IntegerField(source="medical_record.id", read_only=True, allow_null=True)
+    
     class Meta:
         model = Appointment
         fields = [
@@ -25,6 +26,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "appointment_time",
             "note",
             "status",
+            "medical_record_id",
             "created_at",
             "updated_at",
         ]

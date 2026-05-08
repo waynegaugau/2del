@@ -1,105 +1,212 @@
-import React, { useState } from "react";
-import { Modal, Form, Button, Row, Col, Alert } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Modal, Form, Button, Row, Col, Table, Alert } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
 
-
-// // Gợi ý logic bổ sung cho Bước 2 trong ExaminationForm
-// const [medicines, setMedicines] = useState([]); // Danh sách thuốc từ kho
-// const [prescriptionId, setPrescriptionId] = useState(null);
-
-// // Hàm tạo đơn thuốc trắng ngay khi vào bước 2
-// const createPrescription = async () => {
-//     try {
-//         const res = await authApis().post(endpoint['medical_record_prescription'](recordId), { note: "" });
-//         setPrescriptionId(res.data.data.id || res.data.id);
-//         // Sau đó load danh sách thuốc để chọn
-//         const medRes = await authApis().get(endpoint['medicines']);
-//         setMedicines(medRes.data.data || medRes.data);
-//     } catch (ex) { toast.error("Không thể tạo đơn thuốc"); }
-// };
-
 const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
-    const [step, setStep] = useState(1); // 1: Bệnh án, 2: Đơn thuốc
-    const [recordId, setRecordId] = useState(null);
+    const [step, setStep] = useState(1); // 1: Bệnh án, 2: Kê đơn
     const [loading, setLoading] = useState(false);
+    const [prescriptionId, setPrescriptionId] = useState(null);
+    const [medicines, setMedicines] = useState([]); // Danh sách thuốc từ kho
+    
+    // State cho Bệnh án
+    const [recordData, setRecordData] = useState({ symptoms: "", diagnosis: "", treatment: "", note: "" });
 
-    // State cho Hồ sơ bệnh án[cite: 15, 23]
-    const [recordData, setRecordData] = useState({
-        symptoms: "",
-        diagnosis: "",
-        treatment: "",
-        note: ""
-    });
+    // State cho Danh sách thuốc đang kê (Giỏ hàng)
+    const [prescriptionItems, setPrescriptionItems] = useState([]);
 
-    // 1. Lưu Hồ sơ bệnh án[cite: 8, 23]
+    // Load kho thuốc khi vào bước 2
+    useEffect(() => {
+        if (step === 2) {
+            const fetchMedicines = async () => {
+                try {
+                    const res = await authApis().get(endpoint['medicines']);
+                    setMedicines(res.data.data || res.data);
+                } catch (ex) { toast.error("Không thể tải kho thuốc."); }
+            };
+            fetchMedicines();
+        }
+    }, [step]);
+
+    // BƯỚC 1: LƯU BỆNH ÁN & KHỞI TẠO ĐƠN THUỐC
     const handleSubmitRecord = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
-            setLoading(true);
-            const res = await authApis().post(endpoint['appointment_medical_record'](appointment.id), recordData);
-            const newRecord = res.data.data || res.data;
-            setRecordId(newRecord.id);
-            toast.success("Đã lưu hồ sơ bệnh án!");
-            setStep(2); // Chuyển sang bước kê đơn
+            // 1. Tạo bệnh án
+            const resRecord = await authApis().post(endpoint['appointment_medical_record'](appointment.id), recordData);
+            const newRecord = resRecord.data.data || resRecord.data;
+            
+            // 2. Tạo đơn thuốc trống gắn với bệnh án
+            const resPres = await authApis().post(endpoint['medical_record_prescription'](newRecord.id), { note: "Kê đơn tại quầy" });
+            setPrescriptionId(resPres.data.id || resPres.data.data.id);
+            
+            setStep(2);
+            toast.success("Đã lưu bệnh án. Mời bạn kê đơn!");
         } catch (ex) {
-            toast.error(ex.response?.data?.message || "Lỗi khi lưu hồ sơ.");
-        } finally {
-            setLoading(false);
-        }
+            toast.error("Lỗi khi khởi tạo hồ sơ.");
+        } finally { setLoading(false); }
     };
 
-    // 2. Kết thúc ca khám
-    const handleFinishAll = async () => {
+    // BƯỚC 2: LOGIC QUẢN LÝ DANH SÁCH THUỐC (GIỐNG FILE THAM KHẢO)
+    const handleAddMedicine = (e) => {
+        const medId = e.target.value;
+        if (!medId) return;
+
+        const medicine = medicines.find(m => m.id === parseInt(medId));
+        if (prescriptionItems.some(item => item.medicine_id === medicine.id)) {
+            return toast.error("Thuốc này đã có trong danh sách!");
+        }
+
+        const newItem = {
+            medicine_id: medicine.id,
+            medicine_name: medicine.name,
+            unit: medicine.unit,
+            quantity: 1,
+            dosage: "",
+            frequency: "",
+            duration_days: 1,
+            instruction: ""
+        };
+        setPrescriptionItems([...prescriptionItems, newItem]);
+    };
+
+    const handleItemChange = (index, field, value) => {
+        const updatedItems = [...prescriptionItems];
+        updatedItems[index][field] = value;
+        setPrescriptionItems(updatedItems);
+    };
+
+    const removeItem = (index) => {
+        setPrescriptionItems(prescriptionItems.filter((_, i) => i !== index));
+    };
+
+    // BƯỚC 3: LƯU TẤT CẢ VÀ HOÀN TẤT
+    const handleFinalize = async () => {
+        if (prescriptionItems.length === 0) return toast.error("Vui lòng thêm ít nhất một loại thuốc!");
+        
+        setLoading(true);
         try {
+            // Gửi từng thuốc lên Backend (vì Backend nhận object lẻ)
+            const promises = prescriptionItems.map(item => 
+                authApis().post(endpoint['prescription_items'](prescriptionId), {
+                    medicine_id: item.medicine_id,
+                    quantity: item.quantity,
+                    dosage: item.dosage || "Theo chỉ dẫn",
+                    frequency: item.frequency || "1 lần/ngày",
+                    duration_days: item.duration_days,
+                    instruction: item.instruction
+                })
+            );
+
+            await Promise.all(promises);
+
+            // Hoàn tất ca khám
             await authApis().post(endpoint['appointment_complete'](appointment.id));
-            toast.success("Ca khám đã hoàn tất!");
-            onComplete(); // Tải lại danh sách ở trang cha
+            
+            toast.success("Đã chốt đơn và kết thúc ca khám!");
+            onComplete();
             onHide();
         } catch (ex) {
-            toast.error("Lỗi khi kết thúc ca khám.");
-        }
+            toast.error("Lỗi khi lưu đơn thuốc (Có thể do tồn kho không đủ).");
+        } finally { setLoading(false); }
     };
 
     return (
-        <Modal show={show} onHide={onHide} size="lg" backdrop="static">
+        <Modal show={show} onHide={onHide} size="xl" backdrop="static">
             <Modal.Header closeButton>
                 <Modal.Title>
-                    {step === 1 ? `Khám bệnh: ${appointment.pet_name}` : "Kê đơn thuốc"}
+                    {step === 1 ? `Khám bệnh: ${appointment.pet_name}` : `Kê đơn cho: ${appointment.pet_name}`}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {step === 1 ? (
                     <Form onSubmit={handleSubmitRecord}>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="fw-bold">Triệu chứng</Form.Label>
+                                    <Form.Control as="textarea" rows={3} required value={recordData.symptoms}
+                                        onChange={e => setRecordData({...recordData, symptoms: e.target.value})} />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="fw-bold">Chẩn đoán</Form.Label>
+                                    <Form.Control as="textarea" rows={3} required value={recordData.diagnosis}
+                                        onChange={e => setRecordData({...recordData, diagnosis: e.target.value})} />
+                                </Form.Group>
+                            </Col>
+                        </Row>
                         <Form.Group className="mb-3">
-                            <Form.Label className="fw-bold">Triệu chứng[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2} required
-                                onChange={e => setRecordData({ ...recordData, symptoms: e.target.value })} />
+                            <Form.Label className="fw-bold">Hướng điều trị</Form.Label>
+                            <Form.Control as="textarea" rows={2} value={recordData.treatment}
+                                onChange={e => setRecordData({...recordData, treatment: e.target.value})} />
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label className="fw-bold">Chẩn đoán[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2} required
-                                onChange={e => setRecordData({ ...recordData, diagnosis: e.target.value })} />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label className="fw-bold">Hướng điều trị[cite: 11, 15]</Form.Label>
-                            <Form.Control as="textarea" rows={2}
-                                onChange={e => setRecordData({ ...recordData, treatment: e.target.value })} />
-                        </Form.Group>
-                        <Button variant="primary" type="submit" className="w-100" disabled={loading}>
-                            {loading ? "Đang lưu..." : "Lưu hồ sơ & Chuyển sang kê đơn"}
+                        <Button variant="primary" type="submit" className="w-100 py-2" disabled={loading}>
+                            {loading ? "Đang xử lý..." : "Lưu bệnh án & Chuyển sang kê đơn"}
                         </Button>
                     </Form>
                 ) : (
-                    <div className="text-center p-4">
-                        <Alert variant="success">Hồ sơ bệnh án đã được tạo thành công!</Alert>
-                        <p>Bạn có muốn tiếp tục kê đơn thuốc cho bé không?</p>
-                        <div className="d-flex justify-content-center gap-3">
-                            <Button variant="outline-primary" onClick={() => {/* Dẫn tới logic kê đơn chi tiết */ }}>
-                                + Thêm đơn thuốc[cite: 22]
-                            </Button>
-                            <Button variant="success" onClick={handleFinishAll}>
-                                Hoàn tất & Đóng ca khám
+                    <div>
+                        <div className="mb-4 p-3 bg-light border rounded">
+                            <Form.Label className="fw-bold text-primary">Chọn thuốc từ kho:</Form.Label>
+                            <Form.Select onChange={handleAddMedicine} value="">
+                                <option value="">-- Click để tìm và thêm thuốc vào danh sách --</option>
+                                {medicines.map(m => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.name} - Tồn kho: {m.stock_quantity} {m.unit}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </div>
+
+                        <Table responsive bordered hover>
+                            <thead className="table-dark">
+                                <tr>
+                                    <th style={{ width: '25%' }}>Tên thuốc</th>
+                                    <th style={{ width: '10%' }}>Số lượng</th>
+                                    <th style={{ width: '20%' }}>Liều dùng</th>
+                                    <th style={{ width: '20%' }}>Tần suất</th>
+                                    <th style={{ width: '10%' }}>Số ngày</th>
+                                    <th style={{ width: '5%' }}></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {prescriptionItems.map((item, index) => (
+                                    <tr key={item.medicine_id}>
+                                        <td className="align-middle"><strong>{item.medicine_name}</strong></td>
+                                        <td>
+                                            <Form.Control type="number" min="1" value={item.quantity}
+                                                onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
+                                        </td>
+                                        <td>
+                                            <Form.Control placeholder="1 viên..." value={item.dosage}
+                                                onChange={e => handleItemChange(index, 'dosage', e.target.value)} />
+                                        </td>
+                                        <td>
+                                            <Form.Control placeholder="Sáng/Chiều..." value={item.frequency}
+                                                onChange={e => handleItemChange(index, 'frequency', e.target.value)} />
+                                        </td>
+                                        <td>
+                                            <Form.Control type="number" min="1" value={item.duration_days}
+                                                onChange={e => handleItemChange(index, 'duration_days', e.target.value)} />
+                                        </td>
+                                        <td>
+                                            <Button variant="outline-danger" size="sm" onClick={() => removeItem(index)}>X</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {prescriptionItems.length === 0 && (
+                                    <tr><td colSpan="6" className="text-center p-4 text-muted">Chưa có thuốc nào được chọn.</td></tr>
+                                )}
+                            </tbody>
+                        </Table>
+
+                        <div className="d-flex gap-2 mt-4">
+                            <Button variant="secondary" className="flex-grow-1" onClick={onHide}>Hủy bỏ</Button>
+                            <Button variant="success" className="flex-grow-2 w-50" onClick={handleFinalize} disabled={loading}>
+                                {loading ? "Đang lưu..." : "Xác nhận chốt đơn & Hoàn tất"}
                             </Button>
                         </div>
                     </div>

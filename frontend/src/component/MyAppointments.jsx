@@ -2,17 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Container, Table, Badge, Spinner, Tab, Tabs, Card, Button } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
-import moment from "moment"; // Nên cài moment để định dạng ngày tháng
+import moment from "moment";
+import MedicalRecordDetailModal from "./MedicalRecordDetailModal";
 
 const MyAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showViewDetail, setShowViewDetail] = useState(false);
+    const [selectedRecordId, setSelectedRecordId] = useState(null);
+    const [selectedAppId, setSelectedAppId] = useState(null);
 
     // 1. Load danh sách lịch hẹn[cite: 10, 11]
     const loadAppointments = async () => {
         try {
             setLoading(true);
             const res = await authApis().get(endpoint['appointments']);
+            console.log("Dữ liệu Appointment của Owner:", res.data.data);
+
             // Backend trả về mảng lịch hẹn của user hiện tại[cite: 7, 11]
             setAppointments(res.data.data || res.data);
         } catch (ex) {
@@ -53,6 +59,20 @@ const MyAppointments = () => {
             }
         }
     };
+    // const handleViewRecord = async (appId) => {
+    //     try {
+    //         const res = await authApis().get(endpoint['owner_medical_record_detail_by_app'](appId));
+    //         const record = res.data.data || res.data;
+    //         setSelectedRecordId(record.id);
+    //         setShowViewDetail(true);
+    //     } catch (ex) {
+    //         toast.error("Bạn không có quyền xem hồ sơ này hoặc hồ sơ chưa tồn tại.");
+    //     }
+    // };
+    const handleViewRecord = (recordId) => {
+        setSelectedRecordId(recordId);
+        setShowViewDetail(true);
+    };
 
     const renderTable = (data) => (
         <Table responsive hover className="mt-3 align-middle">
@@ -81,8 +101,14 @@ const MyAppointments = () => {
                                     Hủy
                                 </Button>
                             )}
-                            {app.status === "COMPLETED" && (
-                                <Button variant="outline-primary" size="sm">Xem hồ sơ</Button>
+                            {app.status === "COMPLETED" && app.medical_record_id && (
+                                <Button
+                                    variant="outline-primary"
+                                    size="sm"
+                                    onClick={() => handleViewRecord(app.medical_record_id)}
+                                >
+                                    Xem hồ sơ
+                                </Button>
                             )}
                         </td>
                     </tr>
@@ -96,7 +122,7 @@ const MyAppointments = () => {
     return (
         <Container className="mt-4 mb-5">
             <h2 className="mb-4 text-success fw-bold">LỊCH HẸN CỦA TÔI</h2>
-            
+
             <Tabs defaultActiveKey="all" className="mb-3 custom-tabs">
                 <Tab eventKey="all" title="Tất cả">
                     {renderTable(appointments)}
@@ -114,6 +140,13 @@ const MyAppointments = () => {
                     <p className="text-muted">Bạn chưa có lịch hẹn nào.</p>
                 </Card>
             )}
+            {/* 3. THÊM MODAL CHI TIẾT */}
+            <MedicalRecordDetailModal
+                recordId={selectedRecordId} // Sử dụng trực tiếp recordId đã có
+                show={showViewDetail}
+                onHide={() => setShowViewDetail(false)}
+                isOwner={true}
+            />
         </Container>
     );
 };
