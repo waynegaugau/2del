@@ -395,6 +395,33 @@ GET /appointments/
 
 Quyền: `PET_OWNER`
 
+Appointment response có các trường chính:
+
+```json
+{
+  "id": 1,
+  "owner": 1,
+  "owner_username": "owner01",
+  "pet": 1,
+  "pet_name": "Milu",
+  "clinic": 1,
+  "clinic_name": "PetCare Clinic Q1",
+  "service": 1,
+  "service_name": "Khám tổng quát",
+  "appointment_time": "2026-05-20T09:00:00+07:00",
+  "note": "Khám sức khỏe định kỳ",
+  "status": "PENDING",
+  "medical_record_id": null,
+  "created_at": "2026-05-10T09:00:00+07:00",
+  "updated_at": "2026-05-10T09:00:00+07:00"
+}
+```
+
+Ghi chú:
+
+- `medical_record_id` là `null` nếu lịch hẹn chưa có hồ sơ bệnh án.
+- Khi đã tạo bệnh án cho lịch hẹn, `medical_record_id` trả về id của hồ sơ bệnh án để frontend có thể gọi API chi tiết phù hợp với quyền người dùng.
+
 ### 5.2. Chủ thú cưng đặt lịch
 
 ```http
