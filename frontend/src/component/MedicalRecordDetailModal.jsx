@@ -11,7 +11,6 @@ const MedicalRecordDetailModal = ({ recordId, appId, show, onHide, isOwner = fal
             const fetchFullDetail = async () => {
                 setLoading(true);
                 try {
-                    // Gọi đúng endpoint Owner với recordId đã có
                     const recordUrl = isOwner
                         ? endpoint['owner_medical_record_detail'](recordId)
                         : endpoint['medical_record_detail'](recordId);

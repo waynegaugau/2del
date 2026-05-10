@@ -15,35 +15,42 @@ const AdminService = () => {
         duration_minutes: 60, is_active: true
     });
 
+    // --- Load danh sách phòng khám ---
     useEffect(() => {
         const loadClinics = async () => {
             try {
                 const res = await authApis().get(endpoint['clinics']);
                 setClinics(res.data.data || res.data);
-            } catch (ex) { toast.error("Không thể tải danh sách phòng khám"); }
+            } catch (ex) {
+                toast.error("Không thể tải danh sách phòng khám");
+            }
         };
         loadClinics();
     }, []);
 
+    // --- Load danh sách dịch vụ theo phòng khám ---
+    const loadServicesByClinic = async () => {
+        if (!selectedClinicId) {
+            setServices([]);
+            return;
+        }
+        try {
+            setLoading(true);
+            const res = await authApis().get(`${endpoint['clinics']}${selectedClinicId}/services/`);
+            const data = res.data.data || res.data;
+            setServices(Array.isArray(data) ? data : []);
+        } catch (ex) {
+            console.error("Lỗi tải danh mục dịch vụ:", ex); // chỉ log, không show toast
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const loadServicesByClinic = async () => {
-            if (!selectedClinicId) {
-                setServices([]);
-                return;
-            }
-            try {
-                setLoading(true);
-                const res = await authApis().get(`${endpoint['clinics']}${selectedClinicId}/services/`);
-                const data = res.data.data || res.data;
-                setServices(Array.isArray(data) ? data : []);
-            } catch (ex) {
-                toast.error("Lỗi tải danh mục dịch vụ");
-            } finally { setLoading(false); }
-        };
         loadServicesByClinic();
     }, [selectedClinicId]);
 
-
+    // --- Thay đổi trạng thái dịch vụ ---
     const handleToggleStatus = async (service) => {
         const action = service.is_active ? "Tắt" : "Bật lại";
         if (window.confirm(`Bạn có chắc muốn ${action} dịch vụ này?`)) {
@@ -53,45 +60,58 @@ const AdminService = () => {
                     is_active: !service.is_active
                 });
                 toast.success(`Đã ${action} dịch vụ`);
-                loadServicesByClinic();
+                loadServicesByClinic().catch(err => console.error("Lỗi reload dịch vụ:", err));
             } catch (ex) {
                 toast.error("Không thể thay đổi trạng thái");
             }
         }
     };
 
+    // --- Thêm/Cập nhật dịch vụ ---
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (parseInt(currentService.duration_minutes) < 60) {
-            toast.error("Thời lượng dịch vụ tối thiểu phải là 60 phút!");
+        const duration = parseInt(currentService.duration_minutes);
+        if (!duration || duration < 60) {
+            toast.error("Thời lượng tối thiểu phải là 60 phút!");
             return;
         }
 
-        try {
-            const payload = {
-                name: currentService.name,
-                service_type: currentService.service_type,
-                description: currentService.description,
-                price: currentService.price.toString(),
-                duration_minutes: parseInt(currentService.duration_minutes),
-                is_active: currentService.is_active
-            };
+        const payload = {
+            name: currentService.name,
+service_type: currentService.service_type,
+            description: currentService.description,
+            price: currentService.price.toString(),
+            duration_minutes: duration,
+        };
 
+        if (currentService.id) {
+            payload.is_active = currentService.is_active;
+        } else {
+            payload.clinic_id = parseInt(selectedClinicId);
+        }
+
+        try {
             if (currentService.id) {
                 await authApis().put(`${endpoint['services']}${currentService.id}/`, payload);
-                toast.success("Cập nhật thành công");
+                toast.success("Cập nhật dịch vụ thành công!");
             } else {
-                payload.clinic_id = parseInt(selectedClinicId);
                 await authApis().post(endpoint['services'], payload);
-                toast.success("Thêm dịch vụ thành công");
+                toast.success("Thêm dịch vụ thành công!");
             }
+
             setShow(false);
-            loadServicesByClinic(); 
-        } catch (ex) {
-            toast.error("Lỗi dữ liệu, vui lòng kiểm tra lại");
+
+            if (selectedClinicId) {
+                loadServicesByClinic().catch(err => console.error("Lỗi reload dịch vụ:", err));
+            }
+        } catch (apiError) {
+            console.error("Lỗi API:", apiError.response?.data || apiError);
+            const message = apiError.response?.data?.message || "Có lỗi xảy ra, vui lòng kiểm tra lại";
+            toast.error(message);
         }
     };
+
     return (
         <Container className="mt-4">
             <Card className="shadow-sm border-0 mb-4">
@@ -106,7 +126,7 @@ const AdminService = () => {
                         </Col>
                         <Col md={3} className="text-end">
                             <Button variant="primary" disabled={!selectedClinicId} onClick={() => {
-                                setCurrentService({ name: "", price: "", description: "", service_type: "EXAM", duration_minutes: 30, is_active: true });
+                                setCurrentService({ name: "", price: "", description: "", service_type: "EXAM", duration_minutes: 60, is_active: true });
                                 setShow(true);
                             }}>+ Thêm dịch vụ</Button>
                         </Col>
@@ -122,7 +142,7 @@ const AdminService = () => {
                         <Table responsive hover className="align-middle mb-0">
                             <thead className="table-dark">
                                 <tr>
-                                    <th>Tên dịch vụ</th>
+<th>Tên dịch vụ</th>
                                     <th>Loại</th>
                                     <th>Thời lượng</th>
                                     <th>Giá niêm yết</th>
@@ -153,7 +173,9 @@ const AdminService = () => {
 
             <Modal show={show} onHide={() => setShow(false)} centered size="lg">
                 <Form onSubmit={handleSubmit}>
-                    <Modal.Header closeButton><Modal.Title>{currentService.id ? "Cập nhật dịch vụ" : "Thêm dịch vụ mới"}</Modal.Title></Modal.Header>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{currentService.id ? "Cập nhật dịch vụ" : "Thêm dịch vụ mới"}</Modal.Title>
+                    </Modal.Header>
                     <Modal.Body>
                         <Row>
                             <Col md={8}>
@@ -167,7 +189,7 @@ const AdminService = () => {
                                     <Form.Label className="fw-bold">Loại</Form.Label>
                                     <Form.Select value={currentService.service_type} onChange={e => setCurrentService({ ...currentService, service_type: e.target.value })}>
                                         <option value="EXAM">Khám bệnh</option>
-                                        <option value="GROOMING">Grooming</option>
+<option value="GROOMING">Grooming</option>
                                         <option value="VACCINE">Tiêm chủng</option>
                                         <option value="OTHER">Khác</option>
                                     </Form.Select>
@@ -196,7 +218,9 @@ const AdminService = () => {
                             <Form.Check type="switch" label="Trạng thái hoạt động" checked={currentService.is_active} onChange={e => setCurrentService({ ...currentService, is_active: e.target.checked })} />
                         )}
                     </Modal.Body>
-                    <Modal.Footer><Button variant="primary" type="submit">Lưu dữ liệu</Button></Modal.Footer>
+                    <Modal.Footer>
+                        <Button variant="primary" type="submit">Lưu dữ liệu</Button>
+                    </Modal.Footer>
                 </Form>
             </Modal>
         </Container>

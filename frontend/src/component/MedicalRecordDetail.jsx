@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, ListGroup, Row, Col, Badge, Button, Modal } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
-import PrescriptionDetail from "./PrescriptionDetail"; // Import component đơn thuốc bên dưới
+import PrescriptionDetail from "./PrescriptionDetail"; 
 
 const MedicalRecordDetail = ({ recordId, show, onHide }) => {
     const [record, setRecord] = useState(null);

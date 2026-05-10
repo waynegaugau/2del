@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Button, Row, Col, Table, Alert } from "react-bootstrap";
+import { Modal, Form, Button, Row, Col, Table } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
 
@@ -7,57 +7,54 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
     const [step, setStep] = useState(1); // 1: Bệnh án, 2: Kê đơn
     const [loading, setLoading] = useState(false);
     const [prescriptionId, setPrescriptionId] = useState(null);
-    const [medicines, setMedicines] = useState([]); // Danh sách thuốc từ kho
-    
-    // State cho Bệnh án
+    const [medicines, setMedicines] = useState([]);
     const [recordData, setRecordData] = useState({ symptoms: "", diagnosis: "", treatment: "", note: "" });
-
-    // State cho Danh sách thuốc đang kê (Giỏ hàng)
     const [prescriptionItems, setPrescriptionItems] = useState([]);
 
-    // Load kho thuốc khi vào bước 2
     useEffect(() => {
-        if (step === 2) {
-            const fetchMedicines = async () => {
-                try {
-                    const res = await authApis().get(endpoint['medicines']);
-                    setMedicines(res.data.data || res.data);
-                } catch (ex) { toast.error("Không thể tải kho thuốc."); }
-            };
-            fetchMedicines();
+        if (show && appointment?.medical_record_id) {
+            setStep(2);
+            fetchExistingPrescription(appointment.medical_record_id);
+        } else {
+            setStep(1);
+            setRecordData({ symptoms: "", diagnosis: "", treatment: "", note: "" });
         }
-    }, [step]);
-
-    // BƯỚC 1: LƯU BỆNH ÁN & KHỞI TẠO ĐƠN THUỐC
+    }, [show, appointment]);
+    const fetchExistingPrescription = async (recordId) => {
+        try {
+            const res = await authApis().get(endpoint['medical_record_prescription'](recordId));
+            const data = res.data.data || res.data;
+            setPrescriptionId(data.id);
+        } catch (ex) {
+            console.error("Lỗi lấy đơn thuốc cũ:", ex);
+        }
+    };
     const handleSubmitRecord = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            // 1. Tạo bệnh án
             const resRecord = await authApis().post(endpoint['appointment_medical_record'](appointment.id), recordData);
             const newRecord = resRecord.data.data || resRecord.data;
-            
-            // 2. Tạo đơn thuốc trống gắn với bệnh án
+
             const resPres = await authApis().post(endpoint['medical_record_prescription'](newRecord.id), { note: "Kê đơn tại quầy" });
             setPrescriptionId(resPres.data.id || resPres.data.data.id);
-            
+
             setStep(2);
-            toast.success("Đã lưu bệnh án. Mời bạn kê đơn!");
-        } catch (ex) {
-            toast.error("Lỗi khi khởi tạo hồ sơ.");
-        } finally { setLoading(false); }
+            toast.success("Đã lưu bệnh án. Bạn có thể kê thuốc hoặc bỏ qua bước này!");
+        } catch {
+            toast.error("Lỗi khi lưu bệnh án.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // BƯỚC 2: LOGIC QUẢN LÝ DANH SÁCH THUỐC (GIỐNG FILE THAM KHẢO)
     const handleAddMedicine = (e) => {
         const medId = e.target.value;
         if (!medId) return;
-
         const medicine = medicines.find(m => m.id === parseInt(medId));
         if (prescriptionItems.some(item => item.medicine_id === medicine.id)) {
             return toast.error("Thuốc này đã có trong danh sách!");
         }
-
         const newItem = {
             medicine_id: medicine.id,
             medicine_name: medicine.name,
@@ -81,35 +78,31 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
         setPrescriptionItems(prescriptionItems.filter((_, i) => i !== index));
     };
 
-    // BƯỚC 3: LƯU TẤT CẢ VÀ HOÀN TẤT
     const handleFinalize = async () => {
-        if (prescriptionItems.length === 0) return toast.error("Vui lòng thêm ít nhất một loại thuốc!");
-        
         setLoading(true);
         try {
-            // Gửi từng thuốc lên Backend (vì Backend nhận object lẻ)
-            const promises = prescriptionItems.map(item => 
-                authApis().post(endpoint['prescription_items'](prescriptionId), {
-                    medicine_id: item.medicine_id,
-                    quantity: item.quantity,
-                    dosage: item.dosage || "Theo chỉ dẫn",
-                    frequency: item.frequency || "1 lần/ngày",
-                    duration_days: item.duration_days,
-                    instruction: item.instruction
-                })
-            );
-
-            await Promise.all(promises);
-
-            // Hoàn tất ca khám
+            if (prescriptionItems.length > 0) {
+                const promises = prescriptionItems.map(item =>
+                    authApis().post(endpoint['prescription_items'](prescriptionId), {
+                        medicine_id: item.medicine_id,
+                        quantity: item.quantity,
+                        dosage: item.dosage || "Theo chỉ dẫn",
+                        frequency: item.frequency || "1 lần/ngày",
+                        duration_days: item.duration_days,
+                        instruction: item.instruction
+                    })
+                );
+                await Promise.all(promises);
+            }
             await authApis().post(endpoint['appointment_complete'](appointment.id));
-            
-            toast.success("Đã chốt đơn và kết thúc ca khám!");
+            toast.success("Đã chốt ca khám thành công!");
             onComplete();
             onHide();
-        } catch (ex) {
-            toast.error("Lỗi khi lưu đơn thuốc (Có thể do tồn kho không đủ).");
-        } finally { setLoading(false); }
+        } catch {
+            toast.error("Lỗi khi lưu dữ liệu ca khám.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -127,21 +120,21 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-bold">Triệu chứng</Form.Label>
                                     <Form.Control as="textarea" rows={3} required value={recordData.symptoms}
-                                        onChange={e => setRecordData({...recordData, symptoms: e.target.value})} />
+                                        onChange={e => setRecordData({ ...recordData, symptoms: e.target.value })} />
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-bold">Chẩn đoán</Form.Label>
                                     <Form.Control as="textarea" rows={3} required value={recordData.diagnosis}
-                                        onChange={e => setRecordData({...recordData, diagnosis: e.target.value})} />
+                                        onChange={e => setRecordData({ ...recordData, diagnosis: e.target.value })} />
                                 </Form.Group>
                             </Col>
                         </Row>
                         <Form.Group className="mb-3">
                             <Form.Label className="fw-bold">Hướng điều trị</Form.Label>
                             <Form.Control as="textarea" rows={2} value={recordData.treatment}
-                                onChange={e => setRecordData({...recordData, treatment: e.target.value})} />
+                                onChange={e => setRecordData({ ...recordData, treatment: e.target.value })} />
                         </Form.Group>
                         <Button variant="primary" type="submit" className="w-100 py-2" disabled={loading}>
                             {loading ? "Đang xử lý..." : "Lưu bệnh án & Chuyển sang kê đơn"}
@@ -150,9 +143,9 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                 ) : (
                     <div>
                         <div className="mb-4 p-3 bg-light border rounded">
-                            <Form.Label className="fw-bold text-primary">Chọn thuốc từ kho:</Form.Label>
+                            <Form.Label className="fw-bold text-primary">Chọn thuốc từ kho (tùy chọn):</Form.Label>
                             <Form.Select onChange={handleAddMedicine} value="">
-                                <option value="">-- Click để tìm và thêm thuốc vào danh sách --</option>
+                                <option value="">-- Click để thêm thuốc --</option>
                                 {medicines.map(m => (
                                     <option key={m.id} value={m.id}>
                                         {m.name} - Tồn kho: {m.stock_quantity} {m.unit}
@@ -164,41 +157,26 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                         <Table responsive bordered hover>
                             <thead className="table-dark">
                                 <tr>
-                                    <th style={{ width: '25%' }}>Tên thuốc</th>
-                                    <th style={{ width: '10%' }}>Số lượng</th>
-                                    <th style={{ width: '20%' }}>Liều dùng</th>
-                                    <th style={{ width: '20%' }}>Tần suất</th>
-                                    <th style={{ width: '10%' }}>Số ngày</th>
-                                    <th style={{ width: '5%' }}></th>
+                                    <th>Tên thuốc</th>
+                                    <th>Số lượng</th>
+                                    <th>Liều dùng</th>
+                                    <th>Tần suất</th>
+                                    <th>Số ngày</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {prescriptionItems.map((item, index) => (
+                                {prescriptionItems.length > 0 ? prescriptionItems.map((item, index) => (
                                     <tr key={item.medicine_id}>
                                         <td className="align-middle"><strong>{item.medicine_name}</strong></td>
-                                        <td>
-                                            <Form.Control type="number" min="1" value={item.quantity}
-                                                onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
-                                        </td>
-                                        <td>
-                                            <Form.Control placeholder="1 viên..." value={item.dosage}
-                                                onChange={e => handleItemChange(index, 'dosage', e.target.value)} />
-                                        </td>
-                                        <td>
-                                            <Form.Control placeholder="Sáng/Chiều..." value={item.frequency}
-                                                onChange={e => handleItemChange(index, 'frequency', e.target.value)} />
-                                        </td>
-                                        <td>
-                                            <Form.Control type="number" min="1" value={item.duration_days}
-                                                onChange={e => handleItemChange(index, 'duration_days', e.target.value)} />
-                                        </td>
-                                        <td>
-                                            <Button variant="outline-danger" size="sm" onClick={() => removeItem(index)}>X</Button>
-                                        </td>
+                                        <td><Form.Control type="number" min="1" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} /></td>
+                                        <td><Form.Control value={item.dosage} placeholder="1 viên..." onChange={e => handleItemChange(index, 'dosage', e.target.value)} /></td>
+                                        <td><Form.Control value={item.frequency} placeholder="Sáng/Chiều..." onChange={e => handleItemChange(index, 'frequency', e.target.value)} /></td>
+                                        <td><Form.Control type="number" min="1" value={item.duration_days} onChange={e => handleItemChange(index, 'duration_days', e.target.value)} /></td>
+                                        <td><Button variant="outline-danger" size="sm" onClick={() => removeItem(index)}>X</Button></td>
                                     </tr>
-                                ))}
-                                {prescriptionItems.length === 0 && (
-                                    <tr><td colSpan="6" className="text-center p-4 text-muted">Chưa có thuốc nào được chọn.</td></tr>
+                                )) : (
+                                    <tr><td colSpan="6" className="text-center text-muted p-4">Chưa chọn thuốc nào. Có thể bỏ qua bước này.</td></tr>
                                 )}
                             </tbody>
                         </Table>
@@ -206,7 +184,7 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
                         <div className="d-flex gap-2 mt-4">
                             <Button variant="secondary" className="flex-grow-1" onClick={onHide}>Hủy bỏ</Button>
                             <Button variant="success" className="flex-grow-2 w-50" onClick={handleFinalize} disabled={loading}>
-                                {loading ? "Đang lưu..." : "Xác nhận chốt đơn & Hoàn tất"}
+                                {loading ? "Đang lưu..." : "Xác nhận & Hoàn tất"}
                             </Button>
                         </div>
                     </div>
