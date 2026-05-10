@@ -68,7 +68,7 @@ erDiagram
 | `medicines` | `Medicine` | Kho thuốc theo từng phòng khám |
 | `prescriptions` | `Prescription` | Đơn thuốc gắn với bệnh án |
 | `prescription_items` | `PrescriptionItem` | Chi tiết thuốc trong đơn |
-| `payments` | `Payment` | Thanh toán cho lịch hẹn đã hoàn tất |
+| `payments` | `Payment` | Thanh toán cho lịch hẹn đã khám xong và đang chờ thanh toán |
 
 ---
 
@@ -256,14 +256,15 @@ Giá trị `status`:
 | `CONFIRMED` | Đã xác nhận |
 | `CHECKED_IN` | Đã check-in |
 | `IN_PROGRESS` | Đang khám/chăm sóc |
-| `COMPLETED` | Hoàn tất |
+| `WAITING_PAYMENT` | Đã khám xong, chờ thanh toán |
+| `COMPLETED` | Hoàn tất sau khi đã thanh toán |
 | `CANCELLED` | Đã hủy |
 | `NO_SHOW` | Khách không đến |
 
 Luồng trạng thái chính:
 
 ```text
-PENDING -> CONFIRMED -> CHECKED_IN -> IN_PROGRESS -> COMPLETED
+PENDING -> CONFIRMED -> CHECKED_IN -> IN_PROGRESS -> WAITING_PAYMENT -> COMPLETED
                  |
                  -> NO_SHOW
 
@@ -433,7 +434,7 @@ Quy tắc nghiệp vụ:
 
 ## 4.10. Bảng `payments`
 
-Mô tả: lưu thanh toán của pet-owner cho lịch hẹn đã hoàn tất.
+Mô tả: lưu thanh toán của pet-owner cho lịch hẹn đã khám xong và đang chờ thanh toán.
 
 | Trường | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |---|---|---|---|
@@ -483,12 +484,13 @@ Quan hệ:
 
 Quy tắc nghiệp vụ:
 
-- Chỉ chủ của lịch hẹn mới được tạo payment.
-- Chỉ lịch hẹn `COMPLETED` mới được thanh toán.
+- Trong luồng chính, payment được tạo tự động khi staff hoàn tất khám và appointment chuyển sang `WAITING_PAYMENT`.
+- Chỉ chủ của lịch hẹn mới được truy cập/xác nhận payment.
+- Endpoint tạo payment thủ công chỉ áp dụng cho lịch hẹn `WAITING_PAYMENT`.
 - Backend tự tính `amount`, frontend không gửi amount.
 - Công thức hiện tại: `service.price + tổng(quantity * medicine.price)` trong đơn thuốc nếu có.
 - `MOCK_ONLINE` có thể được xác nhận để chuyển `PENDING` -> `PAID`.
-- Khi payment `PAID`, hệ thống ghi `paid_at` và sinh `transaction_code`.
+- Khi payment `PAID`, hệ thống ghi `paid_at`, sinh `transaction_code` và chuyển appointment sang `COMPLETED`.
 
 ---
 
@@ -633,8 +635,9 @@ Các bảng liên quan:
 Luồng dữ liệu:
 
 ```text
-appointments(COMPLETED) -> payments
+appointments(WAITING_PAYMENT) -> payments(PENDING)
 amount = service.price + sum(prescription_items.quantity * medicines.price)
+payments(PAID) -> appointments(COMPLETED)
 ```
 
 ### 9.5. Admin xem báo cáo
@@ -664,3 +667,4 @@ payments(PAID) + appointments + users + pets + clinics + services -> reports
   - `0001_initial.py`: tạo các bảng nghiệp vụ ban đầu.
   - `0002_prescription_item_unique_constraint.py`: thêm unique constraint cho chi tiết đơn thuốc.
   - `0003_payment.py`: thêm bảng thanh toán.
+  - `0004_appointment_waiting_payment_status.py`: thêm trạng thái `WAITING_PAYMENT` cho lịch hẹn.

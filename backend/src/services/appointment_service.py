@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from django.db import transaction
+
 from src.common.exceptions import (
     BusinessException,
     NotFoundException,
@@ -7,6 +9,7 @@ from src.common.exceptions import (
 )
 from src.models import Appointment, Clinic, Pet, Service
 from src.repositories.appointment_repository import AppointmentRepository
+from src.services.payment_service import PaymentService
 
 
 class AppointmentService:
@@ -114,6 +117,7 @@ class AppointmentService:
             Appointment.STATUS_CONFIRMED,
             Appointment.STATUS_CHECKED_IN,
             Appointment.STATUS_IN_PROGRESS,
+            Appointment.STATUS_WAITING_PAYMENT,
             Appointment.STATUS_COMPLETED,
             Appointment.STATUS_CANCELLED,
             Appointment.STATUS_NO_SHOW,
@@ -148,6 +152,7 @@ class AppointmentService:
         if appointment.status in [
             Appointment.STATUS_CHECKED_IN,
             Appointment.STATUS_IN_PROGRESS,
+            Appointment.STATUS_WAITING_PAYMENT,
             Appointment.STATUS_COMPLETED,
             Appointment.STATUS_CANCELLED,
             Appointment.STATUS_NO_SHOW,
@@ -217,8 +222,11 @@ class AppointmentService:
         if appointment.status != Appointment.STATUS_IN_PROGRESS:
             raise BusinessException("Chỉ lịch hẹn đang khám mới có thể hoàn tất.")
 
-        appointment.status = Appointment.STATUS_COMPLETED
-        return AppointmentRepository.save(appointment)
+        with transaction.atomic():
+            appointment.status = Appointment.STATUS_WAITING_PAYMENT
+            appointment = AppointmentRepository.save(appointment)
+            PaymentService.create_pending_payment_for_appointment(appointment)
+            return appointment
 
     @staticmethod
     def mark_no_show(user, appointment_id):

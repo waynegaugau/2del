@@ -2,7 +2,7 @@ from src.models import Appointment
 
 
 class AppointmentRepository:
-    APPOINTMENT_SELECT_RELATED = ("owner", "pet", "clinic", "service", "medical_record")
+    APPOINTMENT_SELECT_RELATED = ("owner", "pet", "clinic", "service", "medical_record", "payment")
 
     @staticmethod
     def create(**kwargs):

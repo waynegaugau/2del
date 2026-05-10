@@ -308,7 +308,7 @@ E1 - Dữ liệu không hợp lệ
 
 -   Chỉ lịch `CHECKED_IN` mới được bắt đầu khám.
 
--   Chỉ lịch `IN_PROGRESS` mới được hoàn tất.
+-   Chỉ lịch `IN_PROGRESS` mới được hoàn tất khám và chuyển sang chờ thanh toán.
 
 -   Chỉ lịch `CONFIRMED` mới có thể đánh dấu `NO_SHOW`.
 
@@ -324,7 +324,7 @@ E1 - Dữ liệu không hợp lệ
 
 5.  Staff bắt đầu khám/chăm sóc: `CHECKED_IN` → `IN_PROGRESS`.
 
-6.  Staff hoàn tất lịch hẹn: `IN_PROGRESS` → `COMPLETED`.
+6.  Staff hoàn tất khám: `IN_PROGRESS` → `WAITING_PAYMENT`, hệ thống tự tạo payment trạng thái `PENDING`.
 
 ### Alternative Flow
 
@@ -720,7 +720,7 @@ E1 - Tồn kho không đủ
 | Use case ID | UC09 |
 | Actor chính | Chủ thú cưng |
 | Actor phụ | Phòng khám/Groomer |
-| Mô tả | Chủ thú cưng thanh toán cho lịch hẹn đã hoàn tất |
+| Mô tả | Chủ thú cưng thanh toán cho lịch hẹn đã khám xong và đang chờ thanh toán |
 
 ### Pre-conditions
 
@@ -728,23 +728,19 @@ E1 - Tồn kho không đủ
 
 -   Lịch hẹn thuộc về chủ thú cưng
 
--   Lịch hẹn có trạng thái `COMPLETED`
+-   Lịch hẹn có trạng thái `WAITING_PAYMENT`
 
--   Lịch hẹn chưa có payment
+-   Lịch hẹn đã có payment `PENDING` do hệ thống tạo sau khi staff hoàn tất khám
 
 ### Post-conditions
 
--   Payment được tạo với trạng thái `PENDING`
-
 -   Nếu xác nhận thanh toán mock online thành công, trạng thái chuyển sang `PAID`
+
+-   Lịch hẹn chuyển sang `COMPLETED`
 
 ### Input
 
--   appointment_id
-
--   method
-
--   note
+-   paymentId
 
 ### Output
 
@@ -758,9 +754,9 @@ E1 - Tồn kho không đủ
 
 ### Business Rules
 
--   Pet-owner chỉ được thanh toán lịch hẹn của mình.
+-   Pet-owner chỉ được thanh toán lịch hẹn/payment của mình.
 
--   Chỉ lịch hẹn `COMPLETED` mới được thanh toán.
+-   Chỉ lịch hẹn `WAITING_PAYMENT` mới được thanh toán.
 
 -   Mỗi lịch hẹn chỉ có một payment.
 
@@ -774,21 +770,17 @@ E1 - Tồn kho không đủ
 
 ### Main Flow
 
-1.  Chủ thú cưng mở lịch hẹn đã hoàn tất.
+1.  Chủ thú cưng mở lịch hẹn đang `WAITING_PAYMENT`.
 
-2.  Chủ thú cưng chọn phương thức thanh toán.
+2.  Frontend lấy `payment.id` từ response appointment.
 
-3.  Frontend gửi `appointment_id`, `method`, `note`.
+3.  Chủ thú cưng xác nhận thanh toán mock online.
 
-4.  Hệ thống kiểm tra lịch hẹn hợp lệ và chưa thanh toán.
+4.  Hệ thống kiểm tra payment thuộc user hiện tại và đang `PENDING`.
 
-5.  Hệ thống tự tính amount từ dịch vụ và thuốc.
+5.  Hệ thống cập nhật payment sang `PAID`, ghi `paid_at` và `transaction_code`.
 
-6.  Hệ thống tạo payment trạng thái `PENDING`.
-
-7.  Chủ thú cưng xác nhận thanh toán mock online.
-
-8.  Hệ thống cập nhật payment sang `PAID`, ghi `paid_at` và `transaction_code`.
+6.  Hệ thống cập nhật appointment sang `COMPLETED`.
 
 ### Alternative Flow
 
@@ -798,7 +790,7 @@ A1 - Payment đã tồn tại
 ### Exception Flow
 
 E1 - Lịch hẹn chưa hoàn tất  
-→ Hệ thống trả về lỗi chỉ có thể thanh toán lịch hẹn đã hoàn tất.
+→ Hệ thống trả về lỗi chỉ có thể thanh toán lịch hẹn đang chờ thanh toán.
 
 ----------
 
@@ -1002,7 +994,9 @@ POST /api/appointments/{appointment_id}/complete/
 
 Kết quả:
 
--   Appointment chuyển sang `COMPLETED`.
+-   Appointment chuyển sang `WAITING_PAYMENT`.
+
+-   Hệ thống tự tạo payment trạng thái `PENDING`.
 
 ----------
 
@@ -1122,53 +1116,25 @@ Payload:
 
 Người dùng:
 
--   Chọn lịch hẹn đã hoàn tất.
+-   Chọn lịch hẹn đang `WAITING_PAYMENT`.
 
--   Chọn phương thức thanh toán.
+-   Lấy `payment.id` từ response appointment.
 
-### Bước 2 - Tạo payment
-
-```http
-POST /api/payments/
-```
-
-Payload:
-
-```json
-{
-  "appointment_id": 1,
-  "method": "MOCK_ONLINE",
-  "note": "Thanh toán online"
-}
-```
-
-### Bước 3 - Backend tạo payment
-
--   Kiểm tra appointment tồn tại.
-
--   Kiểm tra appointment thuộc user hiện tại.
-
--   Kiểm tra appointment đã `COMPLETED`.
-
--   Kiểm tra appointment chưa có payment.
-
--   Tự tính amount từ service và thuốc trong đơn.
-
--   Tạo payment với trạng thái `PENDING`.
-
-### Bước 4 - Xác nhận thanh toán mock online
+### Bước 2 - Xác nhận thanh toán mock online
 
 ```http
 POST /api/payments/{payment_id}/confirm/
 ```
 
-### Bước 5 - Kết quả
+### Bước 3 - Kết quả
 
 -   Payment chuyển sang `PAID`.
 
 -   Hệ thống ghi `paid_at`.
 
 -   Hệ thống sinh `transaction_code`.
+
+-   Appointment chuyển sang `COMPLETED`.
 
 ----------
 

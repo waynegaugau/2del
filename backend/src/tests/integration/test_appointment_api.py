@@ -285,7 +285,8 @@ def test_staff_can_move_appointment_through_api_service_flow(appointment_context
     assert check_in_response.status_code == status.HTTP_200_OK
     assert start_response.status_code == status.HTTP_200_OK
     assert complete_response.status_code == status.HTTP_200_OK
-    assert appointment.status == Appointment.STATUS_COMPLETED
+    assert appointment.status == Appointment.STATUS_WAITING_PAYMENT
+    assert complete_response.data["data"]["payment"]["status"] == "PENDING"
 
 
 def test_staff_can_mark_confirmed_appointment_as_no_show(appointment_context):

@@ -18,7 +18,7 @@ def payment_context():
     other_owner = UserFactory()
     appointment = AppointmentFactory(
         owner=owner,
-        status=Appointment.STATUS_COMPLETED,
+        status=Appointment.STATUS_WAITING_PAYMENT,
     )
     return SimpleNamespace(
         client=APIClient(),
@@ -62,6 +62,8 @@ def test_pet_owner_can_create_view_list_and_confirm_payment(payment_context):
     assert detail_response.data["data"]["id"] == payment_id
     assert confirm_response.status_code == status.HTTP_200_OK
     assert confirm_response.data["data"]["status"] == Payment.STATUS_PAID
+    payment_context.appointment.refresh_from_db()
+    assert payment_context.appointment.status == Appointment.STATUS_COMPLETED
 
 
 def test_pet_owner_cannot_pay_another_owners_appointment(payment_context):
