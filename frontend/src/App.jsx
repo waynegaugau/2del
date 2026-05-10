@@ -27,6 +27,7 @@ import MyAppointments from "./component/MyAppointments";
 import StaffAppointmentList from "./component/StaffAppointmentList";
 import PetMedicalHistory from "./component/PetMedicalHistory";
 import MedicineManagement from "./component/MedicineManagement";
+import StaffPetList from "./component/StaffPetList";
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
@@ -75,6 +76,18 @@ const App = () => {
               <Route path="/staff/pets/:petId/history" element={<PetMedicalHistory />} />
               <Route path="/my-pets/:petId/history" element={<PetMedicalHistory isOwner={true} />} />
               <Route path="/staff/medicines" element={<MedicineManagement />} />
+              {/* Route dành cho Staff */}
+              <Route path="/staff/pets/:petId/history" element={<PetMedicalHistory isOwnerPath={false} />} />
+
+              {/* Route dành cho Chủ nuôi */}
+              <Route path="/my-pets/:petId/history" element={<PetMedicalHistory isOwnerPath={true} />} />
+              {/* Dành cho Staff */}
+              <Route path="/staff/pets" element={<StaffPetList />} />
+              <Route path="/staff/pets/:petId/history" element={<PetMedicalHistory />} />
+
+              {/* Dành cho Owner */}
+              <Route path="/my-pets" element={<Pet />} />
+              <Route path="/my-pets/:petId/history" element={<PetMedicalHistory />} />
             </Routes>
           </Container>
           <Footer />

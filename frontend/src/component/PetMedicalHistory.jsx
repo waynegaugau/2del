@@ -13,22 +13,31 @@ const PetMedicalHistory = () => {
     const [showModal, setShowModal] = useState(false);
     const nav = useNavigate();
     const isOwnerPath = window.location.pathname.includes('/my-pets/');
-    
+
     useEffect(() => {
         const fetchHistory = async () => {
+            setLoading(true);
             try {
-                // Nếu URL chứa 'my-pets', gọi API dành cho chủ nuôi, ngược lại gọi API staff
+                // Kiểm tra xem isOwnerPath có đang trả về False khi Staff truy cập không
                 const apiPath = isOwnerPath
                     ? endpoint['owner_pet_medical_records'](petId)
                     : endpoint['pet_medical_records'](petId);
 
+                console.log("Calling API:", apiPath); // Debug dòng này xem URL có đúng /pets/ID/... không
+
                 const res = await authApis().get(apiPath);
-                setRecords(res.data.data || res.data);
+
+                // Một số API trả về { data: [...] }, một số trả về thẳng [...]
+                const data = res.data.data || res.data;
+                setRecords(data);
             } catch (ex) {
-                toast.error("Không có quyền xem lịch sử này hoặc lỗi kết nối.");
+                console.error("Lỗi tải bệnh án:", ex);
+                // toast.error("Không có quyền xem lịch sử này.");
+            } finally {
+                setLoading(false); // BẮT BUỘC phải có dòng này để hiện giao diện
             }
         };
-        fetchHistory();
+        if (petId) fetchHistory();
     }, [petId, isOwnerPath]);
 
     const handleViewDetail = (id) => {
@@ -88,6 +97,7 @@ const PetMedicalHistory = () => {
                 recordId={selectedRecordId}
                 show={showModal}
                 onHide={() => setShowModal(false)}
+                isOwner={isOwnerPath} // Truyền vào đây để Modal gọi đúng API owner
             />
         </Container>
     );

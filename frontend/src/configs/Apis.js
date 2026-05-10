@@ -63,7 +63,6 @@ export const endpoint = {
     'owner_medical_record_detail': (recordId) => `/owner/medical-records/${recordId}/`,
     'owner_medical_record_prescription': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
 
-
 };
 
 // Instance cho các request công khai (Login, Register)

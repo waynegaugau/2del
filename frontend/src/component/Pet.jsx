@@ -3,12 +3,15 @@ import { Container, Row, Col, Card, Button, Modal, Form, FloatingLabel } from "r
 import { authApis, endpoint } from "../configs/Apis";
 import MySpinner from "./layout/MySpinner";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 import dogAvatar from "../assets/images/dog-placeholder.png";
 import catAvatar from "../assets/images/cat-placeholder.png";
 import otherAvatar from "../assets/images/other-pet-placeholder.png";
 
+
 const Pet = () => {
+    const navigate = useNavigate();
     const DEFAULT_AVATARS = {
         DOG: dogAvatar,
         CAT: catAvatar,
@@ -148,7 +151,12 @@ const Pet = () => {
                                     )}
                                 </Card.Text>
 
-                                <Button variant="outline-success" size="sm" className="w-100 mt-2">
+                                <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    className="w-100 mt-2"
+                                    onClick={() => navigate(`/my-pets/${p.id}/history`)} // Path dành cho Owner
+                                >
                                     Xem hồ sơ y tế
                                 </Button>
                             </Card.Body>
