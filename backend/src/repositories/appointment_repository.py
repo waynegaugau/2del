@@ -2,6 +2,7 @@ from src.models import Appointment
 
 
 class AppointmentRepository:
+    APPOINTMENT_SELECT_RELATED = ("owner", "pet", "clinic", "service", "medical_record")
 
     @staticmethod
     def create(**kwargs):
@@ -10,19 +11,19 @@ class AppointmentRepository:
     @staticmethod
     def get_all_by_owner(owner):
         return Appointment.objects.select_related(
-            "owner", "pet", "clinic", "service"
+            *AppointmentRepository.APPOINTMENT_SELECT_RELATED
         ).filter(owner=owner).order_by("-created_at")
 
     @staticmethod
     def get_all_by_clinic_id(clinic_id: int):
         return Appointment.objects.select_related(
-            "owner", "pet", "clinic", "service"
+            *AppointmentRepository.APPOINTMENT_SELECT_RELATED
         ).filter(clinic_id=clinic_id).order_by("appointment_time", "-created_at")
 
     @staticmethod
     def get_active_by_clinic_id(clinic_id: int):
         return Appointment.objects.select_related(
-            "owner", "pet", "clinic", "service"
+            *AppointmentRepository.APPOINTMENT_SELECT_RELATED
         ).filter(
             clinic_id=clinic_id,
             status__in=[
@@ -36,7 +37,7 @@ class AppointmentRepository:
     @staticmethod
     def get_by_id(appointment_id: int):
         return Appointment.objects.select_related(
-            "owner", "pet", "clinic", "service"
+            *AppointmentRepository.APPOINTMENT_SELECT_RELATED
         ).filter(id=appointment_id).first()
 
     @staticmethod

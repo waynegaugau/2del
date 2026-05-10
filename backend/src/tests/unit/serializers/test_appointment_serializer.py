@@ -5,8 +5,10 @@ from django.utils import timezone
 
 from src.serializers.appointment_serializer import (
     AppointmentCreateSerializer,
+    AppointmentSerializer,
     AppointmentUpdateSerializer,
 )
+from src.tests.factories import AppointmentFactory, MedicalRecordFactory
 from src.tests.unit.serializers.helpers import assert_validation_error
 
 
@@ -34,3 +36,13 @@ def test_appointment_serializers_validate_future_appointment_time():
     }
     serializer = AppointmentCreateSerializer(data=payload)
     assert serializer.is_valid(), serializer.errors
+
+
+def test_appointment_serializer_outputs_medical_record_id():
+    appointment_without_record = AppointmentFactory()
+    data_without_record = AppointmentSerializer(appointment_without_record).data
+    assert data_without_record["medical_record_id"] is None
+
+    record = MedicalRecordFactory()
+    data_with_record = AppointmentSerializer(record.appointment).data
+    assert data_with_record["medical_record_id"] == record.id
