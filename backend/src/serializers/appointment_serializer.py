@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from src.models import Appointment
+from src.serializers.payment_serializer import PaymentSerializer
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -10,6 +11,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
     service_name = serializers.CharField(source="service.name", read_only=True)
     medical_record_id = serializers.IntegerField(source="medical_record.id", read_only=True, allow_null=True)
+    payment = PaymentSerializer(read_only=True)
     
     class Meta:
         model = Appointment
@@ -27,6 +29,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "note",
             "status",
             "medical_record_id",
+            "payment",
             "created_at",
             "updated_at",
         ]

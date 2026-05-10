@@ -67,8 +67,8 @@ class PaymentService:
         if appointment.owner_id != user.id:
             raise PermissionDeniedException("Bạn không có quyền thanh toán lịch hẹn này.")
 
-        if appointment.status != Appointment.STATUS_COMPLETED:
-            raise BusinessException("Chỉ có thể thanh toán lịch hẹn đã hoàn tất.")
+        if appointment.status != Appointment.STATUS_WAITING_PAYMENT:
+            raise BusinessException("Chỉ có thể thanh toán lịch hẹn đang chờ thanh toán.")
 
         existing_payment = PaymentRepository.get_by_appointment_id(appointment.id)
         if existing_payment:
@@ -82,6 +82,24 @@ class PaymentService:
             method=data.get("method", Payment.METHOD_MOCK_ONLINE),
             status=Payment.STATUS_PENDING,
             note=data.get("note", ""),
+        )
+
+    @staticmethod
+    def create_pending_payment_for_appointment(appointment):
+        if appointment.status != Appointment.STATUS_WAITING_PAYMENT:
+            raise BusinessException("Chỉ có thể tạo thanh toán cho lịch hẹn đang chờ thanh toán.")
+
+        existing_payment = PaymentRepository.get_by_appointment_id(appointment.id)
+        if existing_payment:
+            return existing_payment
+
+        return PaymentRepository.create(
+            appointment=appointment,
+            owner=appointment.owner,
+            clinic=appointment.clinic,
+            amount=PaymentService._calculate_amount(appointment),
+            method=Payment.METHOD_MOCK_ONLINE,
+            status=Payment.STATUS_PENDING,
         )
 
     @staticmethod
@@ -102,4 +120,8 @@ class PaymentService:
             payment.paid_at = timezone.now()
             payment.transaction_code = f"PAY-{payment.id}-{payment.paid_at.strftime('%Y%m%d%H%M%S')}"
 
-            return PaymentRepository.save(payment)
+            payment = PaymentRepository.save(payment)
+            payment.appointment.status = Appointment.STATUS_COMPLETED
+            payment.appointment.save()
+
+            return payment

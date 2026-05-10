@@ -8,6 +8,7 @@ class Appointment(TimeStampedModel):
     STATUS_CONFIRMED = "CONFIRMED"
     STATUS_CHECKED_IN = "CHECKED_IN"
     STATUS_IN_PROGRESS = "IN_PROGRESS"
+    STATUS_WAITING_PAYMENT = "WAITING_PAYMENT"
     STATUS_COMPLETED = "COMPLETED"
     STATUS_CANCELLED = "CANCELLED"
     STATUS_NO_SHOW = "NO_SHOW"
@@ -17,6 +18,7 @@ class Appointment(TimeStampedModel):
         (STATUS_CONFIRMED, "Confirmed"),
         (STATUS_CHECKED_IN, "Checked In"),
         (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_WAITING_PAYMENT, "Waiting Payment"),
         (STATUS_COMPLETED, "Completed"),
         (STATUS_CANCELLED, "Cancelled"),
         (STATUS_NO_SHOW, "No Show"),

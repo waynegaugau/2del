@@ -9,7 +9,7 @@ from src.common.exceptions import (
     NotFoundException,
     PermissionDeniedException,
 )
-from src.models import Appointment, Pet
+from src.models import Appointment, Payment, Pet
 from src.services.appointment_service import AppointmentService
 from src.tests.factories import (
     AppointmentFactory,
@@ -281,7 +281,8 @@ def test_staff_can_move_appointment_through_service_flow(appointment_context):
         appointment_context.staff,
         appointment.id,
     )
-    assert appointment.status == Appointment.STATUS_COMPLETED
+    assert appointment.status == Appointment.STATUS_WAITING_PAYMENT
+    assert appointment.payment.status == Payment.STATUS_PENDING
 
 
 def test_staff_from_other_clinic_cannot_confirm_appointment(appointment_context):

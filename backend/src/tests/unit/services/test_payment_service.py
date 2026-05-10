@@ -30,7 +30,7 @@ def test_create_payment_calculates_service_and_medicine_amount():
         owner=owner,
         clinic=service.clinic,
         service=service,
-        status=Appointment.STATUS_COMPLETED,
+        status=Appointment.STATUS_WAITING_PAYMENT,
     )
     record = MedicalRecordFactory(appointment=appointment)
     prescription = PrescriptionFactory(medical_record=record)
@@ -70,7 +70,7 @@ def test_create_payment_rejects_unfinished_appointment():
 
 
 def test_create_payment_rejects_another_owners_appointment():
-    appointment = AppointmentFactory(status=Appointment.STATUS_COMPLETED)
+    appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
     other_owner = UserFactory()
 
     with pytest.raises(PermissionDeniedException):
@@ -84,7 +84,12 @@ def test_create_payment_rejects_another_owners_appointment():
 
 
 def test_create_payment_rejects_duplicate_payment():
-    payment = PaymentFactory()
+    appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
+    payment = PaymentFactory(
+        appointment=appointment,
+        owner=appointment.owner,
+        clinic=appointment.clinic,
+    )
 
     with pytest.raises(BusinessException):
         PaymentService.create_payment(
@@ -97,7 +102,13 @@ def test_create_payment_rejects_duplicate_payment():
 
 
 def test_confirm_payment_marks_mock_online_payment_as_paid():
-    payment = PaymentFactory(status=Payment.STATUS_PENDING)
+    appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
+    payment = PaymentFactory(
+        appointment=appointment,
+        owner=appointment.owner,
+        clinic=appointment.clinic,
+        status=Payment.STATUS_PENDING,
+    )
 
     confirmed_payment = PaymentService.confirm_payment(payment.owner, payment.id)
 
@@ -106,6 +117,8 @@ def test_confirm_payment_marks_mock_online_payment_as_paid():
     assert payment.status == Payment.STATUS_PAID
     assert payment.paid_at is not None
     assert payment.transaction_code.startswith(f"PAY-{payment.id}-")
+    appointment.refresh_from_db()
+    assert appointment.status == Appointment.STATUS_COMPLETED
 
 
 def test_confirm_payment_rejects_cash_payment():

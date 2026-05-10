@@ -752,6 +752,19 @@
         },
         {
           "name": "Staff Complete Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Appointment waiting for payment', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.payment) { pm.environment.set('payment_id', json.data.payment.id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -1024,7 +1037,7 @@
       "name": "07 Pet Owner - Payments",
       "item": [
         {
-          "name": "Create Payment",
+          "name": "Create Payment (Manual Fallback)",
           "event": [
             {
               "listen": "test",

@@ -54,7 +54,7 @@ Content-Type: application/json
 | Pet species | `DOG`, `CAT`, `OTHER` |
 | Pet gender | `MALE`, `FEMALE` |
 | Service type | `EXAM`, `GROOMING`, `VACCINE`, `OTHER` |
-| Appointment status | `PENDING`, `CONFIRMED`, `CHECKED_IN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `NO_SHOW` |
+| Appointment status | `PENDING`, `CONFIRMED`, `CHECKED_IN`, `IN_PROGRESS`, `WAITING_PAYMENT`, `COMPLETED`, `CANCELLED`, `NO_SHOW` |
 | Payment method | `CASH`, `MOCK_ONLINE` |
 | Payment status | `PENDING`, `PAID`, `FAILED`, `CANCELLED` |
 
@@ -412,6 +412,7 @@ Appointment response có các trường chính:
   "note": "Khám sức khỏe định kỳ",
   "status": "PENDING",
   "medical_record_id": null,
+  "payment": null,
   "created_at": "2026-05-10T09:00:00+07:00",
   "updated_at": "2026-05-10T09:00:00+07:00"
 }
@@ -421,6 +422,7 @@ Ghi chú:
 
 - `medical_record_id` là `null` nếu lịch hẹn chưa có hồ sơ bệnh án.
 - Khi đã tạo bệnh án cho lịch hẹn, `medical_record_id` trả về id của hồ sơ bệnh án để frontend có thể gọi API chi tiết phù hợp với quyền người dùng.
+- `payment` là `null` trước khi staff hoàn tất khám. Khi appointment ở `WAITING_PAYMENT` hoặc `COMPLETED`, field này trả về payment gắn với lịch hẹn.
 
 ### 5.2. Chủ thú cưng đặt lịch
 
@@ -528,7 +530,7 @@ Quyền: `CLINIC_STAFF`
 
 Trạng thái hợp lệ: `CHECKED_IN` -> `IN_PROGRESS`
 
-### 5.11. Staff hoàn tất lịch hẹn
+### 5.11. Staff hoàn tất khám và tạo thanh toán
 
 ```http
 POST /appointments/{appointment_id}/complete/
@@ -536,7 +538,34 @@ POST /appointments/{appointment_id}/complete/
 
 Quyền: `CLINIC_STAFF`
 
-Trạng thái hợp lệ: `IN_PROGRESS` -> `COMPLETED`
+Trạng thái hợp lệ: `IN_PROGRESS` -> `WAITING_PAYMENT`
+
+Ghi chú:
+
+- Backend tự tạo `Payment` với trạng thái `PENDING` nếu lịch hẹn chưa có payment.
+- `COMPLETED` chỉ được set sau khi owner xác nhận thanh toán thành công.
+
+Response mẫu:
+
+```json
+{
+  "success": true,
+  "message": "Hoàn tất lịch hẹn thành công",
+  "data": {
+    "id": 1,
+    "status": "WAITING_PAYMENT",
+    "payment": {
+      "id": 1,
+      "appointment_id": 1,
+      "amount": "110000.00",
+      "method": "MOCK_ONLINE",
+      "status": "PENDING",
+      "paid_at": null,
+      "transaction_code": null
+    }
+  }
+}
+```
 
 ### 5.12. Staff đánh dấu vắng mặt
 
@@ -840,6 +869,8 @@ POST /payments/
 
 Quyền: `PET_OWNER`
 
+Ghi chú: trong luồng chính, payment đã được tạo tự động khi staff gọi `POST /appointments/{appointment_id}/complete/`. Endpoint này dùng cho trường hợp cần tạo payment thủ công cho appointment đang `WAITING_PAYMENT`.
+
 Request body:
 
 ```json
@@ -853,7 +884,7 @@ Request body:
 Ghi chú:
 
 - Chỉ chủ của lịch hẹn mới được tạo thanh toán.
-- Chỉ lịch hẹn `COMPLETED` mới được thanh toán.
+- Chỉ lịch hẹn `WAITING_PAYMENT` mới được tạo thanh toán.
 - Mỗi lịch hẹn chỉ có một payment.
 - Backend tự tính `amount = service.price + tổng tiền thuốc trong đơn`, không lấy amount từ frontend.
 
@@ -877,7 +908,7 @@ Ghi chú:
 
 - Chỉ hỗ trợ xác nhận payment có `method = MOCK_ONLINE`.
 - Payment phải ở trạng thái `PENDING`.
-- Sau khi xác nhận thành công, payment chuyển sang `PAID`, có `paid_at` và `transaction_code`.
+- Sau khi xác nhận thành công, payment chuyển sang `PAID`, có `paid_at` và `transaction_code`, appointment chuyển sang `COMPLETED`.
 
 Response mẫu:
 
@@ -1015,6 +1046,7 @@ Response mẫu:
       "CONFIRMED": 4,
       "CHECKED_IN": 1,
       "IN_PROGRESS": 0,
+      "WAITING_PAYMENT": 0,
       "COMPLETED": 12,
       "CANCELLED": 0,
       "NO_SHOW": 0
@@ -1124,9 +1156,9 @@ Authorization: Bearer <access_token>
 3. Xem phòng khám: `GET /clinics/`.
 4. Xem dịch vụ phòng khám: `GET /clinics/{clinic_id}/services/`.
 5. Đặt lịch: `POST /appointments/`.
-6. Staff xác nhận/check-in/start/complete lịch.
-7. Pet-owner tạo payment: `POST /payments/`.
-8. Pet-owner xác nhận payment: `POST /payments/{payment_id}/confirm/`.
+6. Staff xác nhận/check-in/start/complete lịch. Khi complete, appointment chuyển sang `WAITING_PAYMENT` và payment `PENDING` được tạo tự động.
+7. Pet-owner xác nhận payment: `POST /payments/{payment_id}/confirm/`.
+8. Sau khi payment `PAID`, appointment chuyển sang `COMPLETED`.
 
 ### 12.3. Luồng staff khám và kê đơn
 
