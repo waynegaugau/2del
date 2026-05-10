@@ -751,6 +751,31 @@
           "response": []
         },
         {
+          "name": "Staff Complete Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/complete/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "complete",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Owner List Pet Medical Records",
           "request": {
             "method": "GET",
@@ -770,6 +795,31 @@
                 "pets",
                 "{{pet_id}}",
                 "medical-records",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Get Medical Record Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/owner/medical-records/{{medical_record_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "owner",
+                "medical-records",
+                "{{medical_record_id}}",
                 ""
               ]
             }
@@ -962,31 +1012,6 @@
                 "medical-records",
                 "{{medical_record_id}}",
                 "prescription",
-                ""
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Staff Complete Appointment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staff_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/appointments/{{appointment_id}}/complete/",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "appointments",
-                "{{appointment_id}}",
-                "complete",
                 ""
               ]
             }
