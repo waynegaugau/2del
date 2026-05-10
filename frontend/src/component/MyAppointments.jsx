@@ -12,14 +12,11 @@ const MyAppointments = () => {
     const [selectedRecordId, setSelectedRecordId] = useState(null);
     const [selectedAppId, setSelectedAppId] = useState(null);
 
-    // 1. Load danh sách lịch hẹn[cite: 10, 11]
     const loadAppointments = async () => {
         try {
             setLoading(true);
             const res = await authApis().get(endpoint['appointments']);
             console.log("Dữ liệu Appointment của Owner:", res.data.data);
-
-            // Backend trả về mảng lịch hẹn của user hiện tại[cite: 7, 11]
             setAppointments(res.data.data || res.data);
         } catch (ex) {
             toast.error("Không thể tải danh sách lịch hẹn.");
@@ -32,7 +29,6 @@ const MyAppointments = () => {
         loadAppointments();
     }, []);
 
-    // 2. Hàm hỗ trợ hiển thị màu sắc trạng thái
     const getStatusBadge = (status) => {
         switch (status) {
             case "PENDING": return <Badge bg="warning" text="dark">Chờ xác nhận</Badge>;
@@ -46,11 +42,9 @@ const MyAppointments = () => {
         }
     };
 
-    // 3. Logic Hủy lịch (Chỉ cho phép khi đang PENDING)
     const handleCancel = async (appId) => {
         if (window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này?")) {
             try {
-                // Sử dụng hàm cancel_appointment của Backend[cite: 10, 11]
                 await authApis().delete(endpoint['appointment_detail'](appId));
                 toast.success("Đã hủy lịch hẹn.");
                 loadAppointments(); // Tải lại danh sách
@@ -59,16 +53,7 @@ const MyAppointments = () => {
             }
         }
     };
-    // const handleViewRecord = async (appId) => {
-    //     try {
-    //         const res = await authApis().get(endpoint['owner_medical_record_detail_by_app'](appId));
-    //         const record = res.data.data || res.data;
-    //         setSelectedRecordId(record.id);
-    //         setShowViewDetail(true);
-    //     } catch (ex) {
-    //         toast.error("Bạn không có quyền xem hồ sơ này hoặc hồ sơ chưa tồn tại.");
-    //     }
-    // };
+
     const handleViewRecord = (recordId) => {
         setSelectedRecordId(recordId);
         setShowViewDetail(true);
@@ -95,7 +80,6 @@ const MyAppointments = () => {
                         <td>{moment(app.appointment_time).format("DD/MM/YYYY HH:mm")}</td>
                         <td>{getStatusBadge(app.status)}</td>
                         <td>
-                            {/* Chỉ cho phép hủy nếu lịch đang PENDING[cite: 10] */}
                             {app.status === "PENDING" && (
                                 <Button variant="outline-danger" size="sm" onClick={() => handleCancel(app.id)}>
                                     Hủy
@@ -140,9 +124,8 @@ const MyAppointments = () => {
                     <p className="text-muted">Bạn chưa có lịch hẹn nào.</p>
                 </Card>
             )}
-            {/* 3. THÊM MODAL CHI TIẾT */}
             <MedicalRecordDetailModal
-                recordId={selectedRecordId} // Sử dụng trực tiếp recordId đã có
+                recordId={selectedRecordId} 
                 show={showViewDetail}
                 onHide={() => setShowViewDetail(false)}
                 isOwner={true}

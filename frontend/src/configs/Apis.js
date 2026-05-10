@@ -20,7 +20,8 @@ export const endpoint = {
     'clinics': '/clinics/',
     'services': '/services/',
     'services_by_clinic': (clinicId) => `/clinics/${clinicId}/services/`,
-
+    'users': '/users/',
+    'admin_staffs': '/admin/staffs/', 
     // Appointments (Chung & Staff)
     'appointments': '/appointments/',
     'staff_clinic_appointments': '/appointments/clinic/', // Mới bổ sung

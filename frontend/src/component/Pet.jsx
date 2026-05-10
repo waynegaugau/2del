@@ -19,9 +19,7 @@ const Pet = () => {
     };
     const formatDate = (dateString) => {
         if (!dateString) return "Chưa cập nhật";
-        // Tách chuỗi 2025-03-31 thành [2025, 03, 31]
         const [year, month, day] = dateString.split("-");
-        // Trả về định dạng mong muốn: 31-03-2025
         return `${day}-${month}-${year}`;
     };
 
@@ -30,31 +28,28 @@ const Pet = () => {
     const [showModal, setShowModal] = useState(false);
     const [newPet, setNewPet] = useState({
         name: "",
-        species: "DOG", // Mặc định là DOG
+        species: "DOG", 
         breed: "",
-        gender: "MALE", // Mặc định là MALE
+        gender: "MALE",
         birth_date: "",
         weight: "",
         note: ""
     });
 
-    // 1. Lấy danh sách thú cưng
     const loadPets = async () => {
         try {
             setLoading(true);
             let res = await authApis().get(endpoint['pets']);
 
-            console.log("Dữ liệu Pets trả về:", res.data); // Kiểm tra log này ở F12
+            console.log("Dữ liệu Pets trả về:", res.data); 
 
-            // Nếu BE trả về dạng { data: [...] } thì lấy res.data.data
-            // Nếu BE trả về mảng trực tiếp thì lấy res.data
             const data = res.data.data || res.data;
 
             if (Array.isArray(data)) {
                 setPets(data);
             } else {
                 console.error("Dữ liệu không phải mảng:", data);
-                setPets([]); // Reset về mảng rỗng để không bị crash map
+                setPets([]);
             }
         } catch (ex) {
             console.error(ex);
@@ -84,13 +79,9 @@ const Pet = () => {
             const errorData = ex.response?.data;
 
             if (errorData && errorData.errors) {
-                // Lấy danh sách các trường bị lỗi (ví dụ: ["birth_date"])
                 const fields = Object.keys(errorData.errors);
-                // Lấy tin nhắn lỗi đầu tiên của trường đầu tiên (ví dụ: "Ngày sinh không được lớn hơn...")
                 const firstError = errorData.errors[fields[0]][0];
-
                 toast.error(firstError);
-
             } else {
                 toast.error("Đã có lỗi xảy ra. Vui lòng thử lại!");
             }
@@ -112,7 +103,6 @@ const Pet = () => {
                 {Array.isArray(pets) && pets.length > 0 ? (
                     pets.map(p => (
                         <Col key={p.id} md={4} className="mb-4">
-                            {/* Nội dung Card */}
                         </Col>
                     ))
                 ) : (
@@ -155,7 +145,7 @@ const Pet = () => {
                                     variant="outline-success"
                                     size="sm"
                                     className="w-100 mt-2"
-                                    onClick={() => navigate(`/my-pets/${p.id}/history`)} // Path dành cho Owner
+                                    onClick={() => navigate(`/my-pets/${p.id}/history`)}
                                 >
                                     Xem hồ sơ y tế
                                 </Button>
@@ -165,7 +155,6 @@ const Pet = () => {
                 ))}
             </Row>
 
-            {/* Modal Thêm Thú Cưng */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Đăng ký thú cưng mới</Modal.Title>

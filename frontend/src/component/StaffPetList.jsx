@@ -6,39 +6,33 @@ import toast from "react-hot-toast";
 
 const StaffPetList = () => {
     const [pets, setPets] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [q, setQ] = useState("");
-    const [loading, setLoading] = useState(false); // THÊM DÒNG NÀY
     const navigate = useNavigate();
 
     const loadPets = async () => {
         try {
             setLoading(true);
-            // Gửi params 'q' để Backend lọc theo tên pet/chủ nuôi
             const res = await authApis().get(endpoint['pets'], {
-                params: { q: q } 
+                params: { q: q }
             });
-
             const data = res.data.data || res.data;
             setPets(Array.isArray(data) ? data : []);
         } catch (ex) {
-            console.error("Lỗi tải danh sách pet:", ex);
-            // toast.error("Không thể tải danh sách thú cưng.");
+            console.error("Lỗi 403 hoặc lỗi tải:", ex);
+            if (ex.response?.status === 403) {
+                toast.error("Bạn không có quyền truy cập danh sách của chi nhánh này.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    // THÊM ĐOẠN NÀY: Gọi lại hàm loadPets mỗi khi từ khóa 'q' thay đổi
     useEffect(() => {
-        const timer = setTimeout(() => {
-            loadPets();
-        }, 500); // Debounce 500ms để tránh gọi API liên tục khi gõ phím
+        loadPets();
+    }, [q]); 
 
-        return () => clearTimeout(timer);
-    }, [q]);
-
-    if (loading && pets.length === 0) return <div className="text-center mt-5"><Spinner animation="border" /></div>;
-
+    if (loading) return <div className="text-center mt-5"><Spinner animation="border" /></div>;
     return (
         <Container className="mt-4">
             <h2 className="text-primary fw-bold mb-4">DANH SÁCH THÚ CƯNG HỆ THỐNG</h2>

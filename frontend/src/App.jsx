@@ -28,6 +28,9 @@ import StaffAppointmentList from "./component/StaffAppointmentList";
 import PetMedicalHistory from "./component/PetMedicalHistory";
 import MedicineManagement from "./component/MedicineManagement";
 import StaffPetList from "./component/StaffPetList";
+import AdminClinic from "./component/pages/admin/AdminClinic";
+import AdminStaff from "./component/pages/admin/AdminStaff";
+import AdminService from "./component/pages/admin/AdminService";
 // import DoctorAvailability from "./component/bookDoctor/DoctorAvailability";
 // import AppointmentUpdate from "./component/bookDoctor/AppointmentUpdate";
 // import Appointment from "./component/bookDoctor/Appointment";
@@ -63,7 +66,6 @@ const App = () => {
           <Header />
           <Container fluid className="p-0">
             <MyToaster />
-            {/* Component Toaster của react-hot-toast để hiển thị thông báo */}
             <Toaster position="top-right" />
             <Routes>
               <Route path="/" element={<Home />} />
@@ -88,6 +90,11 @@ const App = () => {
               {/* Dành cho Owner */}
               <Route path="/my-pets" element={<Pet />} />
               <Route path="/my-pets/:petId/history" element={<PetMedicalHistory />} />
+
+              {/* Chỉ dành cho ADMIN */}
+              <Route path="/admin/clinics" element={<AdminClinic />} />
+              <Route path="/admin/staffs" element={<AdminStaff />} />
+              <Route path="/admin/services" element={<AdminService />} />
             </Routes>
           </Container>
           <Footer />

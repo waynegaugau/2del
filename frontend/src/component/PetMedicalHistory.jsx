@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Badge, Spinner, Card, Breadcrumb } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { authApis, endpoint } from "../configs/Apis";
-import MedicalRecordDetailModal from "./MedicalRecordDetailModal"; // Chúng ta sẽ viết ở Bước 3
+import MedicalRecordDetailModal from "./MedicalRecordDetailModal"; 
 import moment from "moment";
 
 const PetMedicalHistory = () => {
@@ -18,23 +18,20 @@ const PetMedicalHistory = () => {
         const fetchHistory = async () => {
             setLoading(true);
             try {
-                // Kiểm tra xem isOwnerPath có đang trả về False khi Staff truy cập không
                 const apiPath = isOwnerPath
                     ? endpoint['owner_pet_medical_records'](petId)
                     : endpoint['pet_medical_records'](petId);
 
-                console.log("Calling API:", apiPath); // Debug dòng này xem URL có đúng /pets/ID/... không
+                console.log("Calling API:", apiPath);
 
                 const res = await authApis().get(apiPath);
 
-                // Một số API trả về { data: [...] }, một số trả về thẳng [...]
                 const data = res.data.data || res.data;
                 setRecords(data);
             } catch (ex) {
                 console.error("Lỗi tải bệnh án:", ex);
-                // toast.error("Không có quyền xem lịch sử này.");
             } finally {
-                setLoading(false); // BẮT BUỘC phải có dòng này để hiện giao diện
+                setLoading(false);
             }
         };
         if (petId) fetchHistory();
@@ -92,12 +89,11 @@ const PetMedicalHistory = () => {
                 </Card.Body>
             </Card>
 
-            {/* Modal hiển thị chi tiết (Sẽ viết ở dưới) */}
             <MedicalRecordDetailModal
                 recordId={selectedRecordId}
                 show={showModal}
                 onHide={() => setShowModal(false)}
-                isOwner={isOwnerPath} // Truyền vào đây để Modal gọi đúng API owner
+                isOwner={isOwnerPath}
             />
         </Container>
     );
