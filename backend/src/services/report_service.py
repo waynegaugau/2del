@@ -1,7 +1,8 @@
 from decimal import Decimal
+from datetime import datetime, time
 
 from django.db.models import Count, Q, Sum
-from django.db.models.functions import TruncDate, TruncMonth
+from django.utils import timezone
 
 from src.models import Appointment, Clinic, Payment, Pet, Service, User
 
@@ -21,9 +22,11 @@ class ReportService:
     @staticmethod
     def _apply_datetime_date_range(queryset, field_name, date_from=None, date_to=None):
         if date_from:
-            queryset = queryset.filter(**{f"{field_name}__date__gte": date_from})
+            start_at = timezone.make_aware(datetime.combine(date_from, time.min))
+            queryset = queryset.filter(**{f"{field_name}__gte": start_at})
         if date_to:
-            queryset = queryset.filter(**{f"{field_name}__date__lte": date_to})
+            end_at = timezone.make_aware(datetime.combine(date_to, time.max))
+            queryset = queryset.filter(**{f"{field_name}__lte": end_at})
         return queryset
 
     @staticmethod
@@ -40,7 +43,7 @@ class ReportService:
     @staticmethod
     def get_overview(date_from=None, date_to=None):
         paid_payments = ReportService._apply_datetime_date_range(
-            Payment.objects.filter(status=Payment.STATUS_PAID),
+            Payment.objects.filter(status=Payment.STATUS_PAID, paid_at__isnull=False),
             "paid_at",
             date_from,
             date_to,
@@ -81,35 +84,38 @@ class ReportService:
     @staticmethod
     def get_revenue_report(date_from=None, date_to=None, group_by="day"):
         paid_payments = ReportService._apply_datetime_date_range(
-            Payment.objects.filter(status=Payment.STATUS_PAID),
+            Payment.objects.filter(status=Payment.STATUS_PAID, paid_at__isnull=False),
             "paid_at",
             date_from,
             date_to,
         )
 
-        trunc_function = TruncMonth if group_by == "month" else TruncDate
-        rows = (
-            paid_payments
-            .annotate(period=trunc_function("paid_at"))
-            .values("period")
-            .annotate(
-                revenue=Sum("amount"),
-                paid_payment_count=Count("id"),
+        grouped = {}
+        for payment in paid_payments.only("amount", "paid_at").order_by("paid_at"):
+            if not payment.paid_at:
+                continue
+            local_paid_at = payment.paid_at.astimezone()
+            period_value = (
+                local_paid_at.strftime("%Y-%m")
+                if group_by == "month"
+                else local_paid_at.date().isoformat()
             )
-            .order_by("period")
-        )
+            if period_value not in grouped:
+                grouped[period_value] = {
+                    "revenue": Decimal("0.00"),
+                    "paid_payment_count": 0,
+                }
+            grouped[period_value]["revenue"] += payment.amount
+            grouped[period_value]["paid_payment_count"] += 1
 
-        series = []
-        for row in rows:
-            period = row["period"]
-            period_value = period.strftime("%Y-%m") if group_by == "month" else period.isoformat()
-            series.append(
-                {
-                    "period": period_value,
-                    "revenue": ReportService._format_decimal(row["revenue"]),
-                    "paid_payment_count": row["paid_payment_count"],
-                },
-            )
+        series = [
+            {
+                "period": period,
+                "revenue": ReportService._format_decimal(values["revenue"]),
+                "paid_payment_count": values["paid_payment_count"],
+            }
+            for period, values in sorted(grouped.items())
+        ]
 
         total_revenue = paid_payments.aggregate(total=Sum("amount"))["total"]
 
@@ -158,7 +164,7 @@ class ReportService:
                 clinic_data["completed_appointment_count"] = row["completed_appointment_count"]
 
         paid_payments = ReportService._apply_datetime_date_range(
-            Payment.objects.filter(status=Payment.STATUS_PAID),
+            Payment.objects.filter(status=Payment.STATUS_PAID, paid_at__isnull=False),
             "paid_at",
             date_from,
             date_to,

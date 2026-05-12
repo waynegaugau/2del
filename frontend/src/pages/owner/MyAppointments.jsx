@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Badge, Spinner, Tab, Tabs, Card, Button } from "react-bootstrap";
-import { authApis, endpoint } from "../configs/Apis";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import moment from "moment";
-import MedicalRecordDetailModal from "./MedicalRecordDetailModal";
+import { authApis, endpoint } from "../../configs/Apis";
+import MedicalRecordDetailModal from "../../component/MedicalRecordDetailModal";
 
 const MyAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showViewDetail, setShowViewDetail] = useState(false);
     const [selectedRecordId, setSelectedRecordId] = useState(null);
-    const [selectedAppId, setSelectedAppId] = useState(null);
+    const navigate = useNavigate();
 
     const loadAppointments = async () => {
         try {
             setLoading(true);
             const res = await authApis().get(endpoint['appointments']);
-            console.log("Dữ liệu Appointment của Owner:", res.data.data);
             setAppointments(res.data.data || res.data);
         } catch (ex) {
             toast.error("Không thể tải danh sách lịch hẹn.");
@@ -35,6 +35,7 @@ const MyAppointments = () => {
             case "CONFIRMED": return <Badge bg="success">Đã xác nhận</Badge>;
             case "CHECKED_IN": return <Badge bg="info">Đã đến phòng khám</Badge>;
             case "IN_PROGRESS": return <Badge bg="primary">Đang khám</Badge>;
+            case "WAITING_PAYMENT": return <Badge style={{ backgroundColor: "#f97316", color: "#fff" }}>Chờ thanh toán</Badge>;
             case "COMPLETED": return <Badge bg="secondary">Hoàn thành</Badge>;
             case "CANCELLED": return <Badge bg="danger">Đã hủy</Badge>;
             case "NO_SHOW": return <Badge bg="dark">Vắng mặt</Badge>;
@@ -47,7 +48,7 @@ const MyAppointments = () => {
             try {
                 await authApis().delete(endpoint['appointment_detail'](appId));
                 toast.success("Đã hủy lịch hẹn.");
-                loadAppointments(); // Tải lại danh sách
+                loadAppointments();
             } catch (ex) {
                 toast.error(ex.response?.data?.message || "Không thể hủy lịch.");
             }
@@ -57,6 +58,14 @@ const MyAppointments = () => {
     const handleViewRecord = (recordId) => {
         setSelectedRecordId(recordId);
         setShowViewDetail(true);
+    };
+
+    const handlePay = (paymentId) => {
+        if (!paymentId) {
+            toast.error("Chưa tìm thấy thông tin thanh toán.");
+            return;
+        }
+        navigate(`/payments/${paymentId}/checkout`);
     };
 
     const renderTable = (data) => (
@@ -85,6 +94,16 @@ const MyAppointments = () => {
                                     Hủy
                                 </Button>
                             )}
+                            {app.status === "WAITING_PAYMENT" && (
+                                <Button
+                                    variant="warning"
+                                    size="sm"
+                                    className="text-white"
+                                    onClick={() => handlePay(app.payment?.id)}
+                                >
+                                    Thanh toán
+                                </Button>
+                            )}
                             {app.status === "COMPLETED" && app.medical_record_id && (
                                 <Button
                                     variant="outline-primary"
@@ -101,18 +120,24 @@ const MyAppointments = () => {
         </Table>
     );
 
-    if (loading) return <Container className="text-center mt-5"><Spinner animation="border" variant="success" /></Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" variant="success" />
+            </Container>
+        );
+    }
 
     return (
         <Container className="mt-4 mb-5">
-            <h2 className="mb-4 text-success fw-bold">LỊCH HẸN CỦA TÔI</h2>
+            <h2 className="mb-4 text-success fw-bold">Lịch hẹn của tôi</h2>
 
             <Tabs defaultActiveKey="all" className="mb-3 custom-tabs">
                 <Tab eventKey="all" title="Tất cả">
                     {renderTable(appointments)}
                 </Tab>
                 <Tab eventKey="upcoming" title="Sắp tới">
-                    {renderTable(appointments.filter(app => ["PENDING", "CONFIRMED"].includes(app.status)))}
+                    {renderTable(appointments.filter(app => ["PENDING", "CONFIRMED", "WAITING_PAYMENT"].includes(app.status)))}
                 </Tab>
                 <Tab eventKey="finished" title="Đã xong/Hủy">
                     {renderTable(appointments.filter(app => ["COMPLETED", "CANCELLED", "NO_SHOW"].includes(app.status)))}
@@ -125,7 +150,7 @@ const MyAppointments = () => {
                 </Card>
             )}
             <MedicalRecordDetailModal
-                recordId={selectedRecordId} 
+                recordId={selectedRecordId}
                 show={showViewDetail}
                 onHide={() => setShowViewDetail(false)}
                 isOwner={true}

@@ -110,7 +110,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     owner = factory.LazyAttribute(lambda payment: payment.appointment.owner)
     clinic = factory.LazyAttribute(lambda payment: payment.appointment.clinic)
     amount = "100000.00"
-    method = Payment.METHOD_MOCK_ONLINE
+    method = Payment.METHOD_VNPAY
     status = Payment.STATUS_PENDING
     paid_at = None
     transaction_code = None

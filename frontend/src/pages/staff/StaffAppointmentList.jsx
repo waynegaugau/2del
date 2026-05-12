@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Badge, Spinner, Card } from "react-bootstrap";
-import { authApis, endpoint } from "../configs/Apis";
+import { authApis, endpoint } from "../../configs/Apis";
 import toast from "react-hot-toast";
 import moment from "moment";
-import ExaminationForm from "./ExaminationForm";
-import MedicalRecordDetailModal from "./MedicalRecordDetailModal";
+import ExaminationForm from "../../component/ExaminationForm";
+import MedicalRecordDetailModal from "../../component/MedicalRecordDetailModal";
 
 const StaffAppointmentList = () => {
     const [appointments, setAppointments] = useState([]);
@@ -19,7 +19,10 @@ const StaffAppointmentList = () => {
         try {
             setLoading(true);
             const res = await authApis().get(endpoint['staff_clinic_appointments']);
-            setAppointments(res.data.data || res.data);
+            const data = res.data.data || res.data;
+            setAppointments(
+                [...data].sort((a, b) => new Date(b.appointment_time) - new Date(a.appointment_time))
+            );
         } catch (ex) {
             toast.error("Không thể tải danh sách lịch hẹn của phòng khám.");
         } finally {
@@ -49,10 +52,14 @@ const StaffAppointmentList = () => {
             "CONFIRMED": { bg: "success", text: "Đã xác nhận" },
             "CHECKED_IN": { bg: "info", text: "Đã đến" },
             "IN_PROGRESS": { bg: "primary", text: "Đang khám" },
+            "WAITING_PAYMENT": { bg: "payment", text: "Chờ thanh toán" },
             "COMPLETED": { bg: "secondary", text: "Hoàn thành" },
             "CANCELLED": { bg: "danger", text: "Đã hủy" }
         };
         const s = statusMap[status] || { bg: "light", text: status };
+        if (s.bg === "payment") {
+            return <Badge style={{ backgroundColor: "#f97316", color: "#fff" }}>{s.text}</Badge>;
+        }
         return <Badge bg={s.bg}>{s.text}</Badge>;
     };
 

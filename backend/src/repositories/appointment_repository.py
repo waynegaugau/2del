@@ -18,7 +18,7 @@ class AppointmentRepository:
     def get_all_by_clinic_id(clinic_id: int):
         return Appointment.objects.select_related(
             *AppointmentRepository.APPOINTMENT_SELECT_RELATED
-        ).filter(clinic_id=clinic_id).order_by("appointment_time", "-created_at")
+        ).filter(clinic_id=clinic_id).order_by("-appointment_time", "-created_at")
 
     @staticmethod
     def get_active_by_clinic_id(clinic_id: int):

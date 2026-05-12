@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Container, Row, Col, Form, FloatingLabel, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Apis, { endpoint } from "../configs/Apis";
-import MySpinner from "./layout/MySpinner";
+import Apis, { endpoint } from "../../configs/Apis";
+import MySpinner from "../../component/layout/MySpinner";
 
 const Register = () => {
     const [user, setUser] = useState({});

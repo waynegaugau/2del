@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Spinner, InputGroup, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { authApis, endpoint } from "../configs/Apis";
+import { authApis, endpoint } from "../../configs/Apis";
 import toast from "react-hot-toast";
 
 const StaffPetList = () => {

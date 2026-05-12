@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
-import { MyUserContext } from "../../configs/MyContexts";
+import { MyUserContext } from "../configs/MyContexts";
 
 const ProtectedRoute = ({ children, allowedRole }) => {
     const user = useContext(MyUserContext);

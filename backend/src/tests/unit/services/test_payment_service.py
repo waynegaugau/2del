@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
@@ -45,7 +46,7 @@ def test_create_payment_calculates_service_and_medicine_amount():
         owner,
         {
             "appointment_id": appointment.id,
-            "method": Payment.METHOD_MOCK_ONLINE,
+            "method": Payment.METHOD_VNPAY,
         },
     )
 
@@ -64,7 +65,7 @@ def test_create_payment_rejects_unfinished_appointment():
             owner,
             {
                 "appointment_id": appointment.id,
-                "method": Payment.METHOD_MOCK_ONLINE,
+                "method": Payment.METHOD_VNPAY,
             },
         )
 
@@ -78,7 +79,7 @@ def test_create_payment_rejects_another_owners_appointment():
             other_owner,
             {
                 "appointment_id": appointment.id,
-                "method": Payment.METHOD_MOCK_ONLINE,
+                "method": Payment.METHOD_VNPAY,
             },
         )
 
@@ -96,12 +97,12 @@ def test_create_payment_rejects_duplicate_payment():
             payment.owner,
             {
                 "appointment_id": payment.appointment_id,
-                "method": Payment.METHOD_MOCK_ONLINE,
+                "method": Payment.METHOD_VNPAY,
             },
         )
 
 
-def test_confirm_payment_marks_mock_online_payment_as_paid():
+def test_create_vnpay_payment_url_returns_signed_sandbox_url(settings):
     appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
     payment = PaymentFactory(
         appointment=appointment,
@@ -109,23 +110,70 @@ def test_confirm_payment_marks_mock_online_payment_as_paid():
         clinic=appointment.clinic,
         status=Payment.STATUS_PENDING,
     )
+    settings.VNPAY_TMN_CODE = "TESTCODE"
+    settings.VNPAY_HASH_SECRET = "TESTSECRET"
+    settings.VNPAY_PAYMENT_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    settings.VNPAY_RETURN_URL = "http://localhost:5173/payment-result"
+    request = SimpleNamespace(META={"REMOTE_ADDR": "127.0.0.1"})
 
-    confirmed_payment = PaymentService.confirm_payment(payment.owner, payment.id)
+    payment_url = PaymentService.create_vnpay_payment_url(payment.owner, payment.id, request)
 
+    assert payment_url.startswith(settings.VNPAY_PAYMENT_URL)
+    assert f"vnp_TxnRef={payment.id}" in payment_url
+    assert "vnp_SecureHash=" in payment_url
+
+
+def test_handle_vnpay_ipn_marks_successful_payment_as_paid(settings):
+    appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
+    payment = PaymentFactory(
+        appointment=appointment,
+        owner=appointment.owner,
+        clinic=appointment.clinic,
+        status=Payment.STATUS_PENDING,
+    )
+    settings.VNPAY_HASH_SECRET = "TESTSECRET"
+    params = {
+        "vnp_TxnRef": str(payment.id),
+        "vnp_Amount": str(int(Decimal(payment.amount) * Decimal("100"))),
+        "vnp_ResponseCode": "00",
+        "vnp_TransactionNo": "14123456",
+    }
+    signed_query = PaymentService._vnpay_signed_query(params)
+    params["vnp_SecureHash"] = signed_query.rsplit("vnp_SecureHash=", 1)[1]
+
+    result = PaymentService.handle_vnpay_ipn(params)
+
+    assert result["RspCode"] == "00"
     payment.refresh_from_db()
-    assert confirmed_payment.id == payment.id
-    assert payment.status == Payment.STATUS_PAID
-    assert payment.paid_at is not None
-    assert payment.transaction_code.startswith(f"PAY-{payment.id}-")
     appointment.refresh_from_db()
+    assert payment.status == Payment.STATUS_PAID
+    assert payment.method == Payment.METHOD_VNPAY
+    assert payment.transaction_code == "14123456"
     assert appointment.status == Appointment.STATUS_COMPLETED
 
 
-def test_confirm_payment_rejects_cash_payment():
+def test_handle_vnpay_return_marks_successful_payment_as_paid(settings):
+    appointment = AppointmentFactory(status=Appointment.STATUS_WAITING_PAYMENT)
     payment = PaymentFactory(
-        method=Payment.METHOD_CASH,
+        appointment=appointment,
+        owner=appointment.owner,
+        clinic=appointment.clinic,
         status=Payment.STATUS_PENDING,
     )
+    settings.VNPAY_HASH_SECRET = "TESTSECRET"
+    params = {
+        "vnp_TxnRef": str(payment.id),
+        "vnp_Amount": str(int(Decimal(payment.amount) * Decimal("100"))),
+        "vnp_ResponseCode": "00",
+        "vnp_TransactionNo": "14999999",
+    }
+    signed_query = PaymentService._vnpay_signed_query(params)
+    params["vnp_SecureHash"] = signed_query.rsplit("vnp_SecureHash=", 1)[1]
 
-    with pytest.raises(BusinessException):
-        PaymentService.confirm_payment(payment.owner, payment.id)
+    result = PaymentService.handle_vnpay_return(params)
+
+    assert result["is_success"] is True
+    payment.refresh_from_db()
+    appointment.refresh_from_db()
+    assert payment.status == Payment.STATUS_PAID
+    assert appointment.status == Appointment.STATUS_COMPLETED

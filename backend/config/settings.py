@@ -162,3 +162,12 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+VNPAY_TMN_CODE = get_env("VNPAY_TMN_CODE", "")
+VNPAY_HASH_SECRET = get_env("VNPAY_HASH_SECRET", "")
+VNPAY_PAYMENT_URL = get_env(
+    "VNPAY_PAYMENT_URL",
+    "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+)
+VNPAY_RETURN_URL = get_env("VNPAY_RETURN_URL", "http://localhost:5173/payment-result")
+VNPAY_IPN_URL = get_env("VNPAY_IPN_URL", "http://localhost:8000/api/payments/vnpay/ipn/")

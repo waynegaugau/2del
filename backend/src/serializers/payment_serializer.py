@@ -5,6 +5,7 @@ from src.models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
     appointment_id = serializers.IntegerField(source="appointment.id", read_only=True)
+    appointment_time = serializers.DateTimeField(source="appointment.appointment_time", read_only=True)
     pet_id = serializers.IntegerField(source="appointment.pet.id", read_only=True)
     pet_name = serializers.CharField(source="appointment.pet.name", read_only=True)
     service_id = serializers.IntegerField(source="appointment.service.id", read_only=True)
@@ -19,6 +20,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "appointment_id",
+            "appointment_time",
             "pet_id",
             "pet_name",
             "service_id",
@@ -43,7 +45,7 @@ class PaymentCreateSerializer(serializers.Serializer):
     appointment_id = serializers.IntegerField()
     method = serializers.ChoiceField(
         choices=Payment.METHOD_CHOICES,
-        default=Payment.METHOD_MOCK_ONLINE,
+        default=Payment.METHOD_VNPAY,
         required=False,
     )
     note = serializers.CharField(required=False, allow_blank=True)

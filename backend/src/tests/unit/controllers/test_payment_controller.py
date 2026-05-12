@@ -2,9 +2,10 @@ import pytest
 from rest_framework import status
 
 from src.controllers.payment_controller import (
-    PaymentConfirmAPIView,
     PaymentDetailAPIView,
     PaymentListCreateAPIView,
+    VnpayCreatePaymentUrlAPIView,
+    VnpayIpnAPIView,
 )
 from src.models import Payment
 from src.tests.factories import PaymentFactory
@@ -34,7 +35,7 @@ def test_payment_controller_delegates_payment_flows(mocker):
                 payment.owner,
                 {
                     "appointment_id": payment.appointment_id,
-                    "method": Payment.METHOD_MOCK_ONLINE,
+                    "method": Payment.METHOD_VNPAY,
                 },
             ),
         ),
@@ -49,9 +50,17 @@ def test_payment_controller_delegates_payment_flows(mocker):
     assert_success(PaymentDetailAPIView().get(make_request(payment.owner), payment.id))
     get_payment_detail.assert_called_once_with(payment.owner, payment.id)
 
-    confirm_payment = mocker.patch(
-        "src.controllers.payment_controller.PaymentService.confirm_payment",
-        return_value=payment,
+    create_url = mocker.patch(
+        "src.controllers.payment_controller.PaymentService.create_vnpay_payment_url",
+        return_value="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?demo=1",
     )
-    assert_success(PaymentConfirmAPIView().post(make_request(payment.owner), payment.id))
-    confirm_payment.assert_called_once_with(payment.owner, payment.id)
+    assert_success(VnpayCreatePaymentUrlAPIView().post(make_request(payment.owner), payment.id))
+    create_url.assert_called_once()
+
+    handle_ipn = mocker.patch(
+        "src.controllers.payment_controller.PaymentService.handle_vnpay_ipn",
+        return_value={"RspCode": "00", "Message": "Confirm Success"},
+    )
+    response = VnpayIpnAPIView().get(make_request(payment.owner))
+    assert response.data["RspCode"] == "00"
+    handle_ipn.assert_called_once()

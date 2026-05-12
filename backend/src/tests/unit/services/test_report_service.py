@@ -68,6 +68,19 @@ def test_revenue_report_groups_paid_payments_by_day():
     assert report["series"][0]["paid_payment_count"] == 2
 
 
+def test_revenue_report_ignores_paid_payments_without_paid_at():
+    PaymentFactory(
+        amount=Decimal("100000.00"),
+        status=Payment.STATUS_PAID,
+        paid_at=None,
+    )
+
+    report = ReportService.get_revenue_report(group_by="day")
+
+    assert report["total_revenue"] == "0.00"
+    assert report["series"] == []
+
+
 def test_clinic_report_returns_revenue_and_appointment_counts_per_clinic():
     clinic = ClinicFactory(name="Clinic A")
     other_clinic = ClinicFactory(name="Clinic B")

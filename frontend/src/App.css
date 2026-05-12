@@ -39,3 +39,100 @@ html, body, #root {
   text-align: center;
   border-bottom: 1px solid #c3e6cb;
 }
+
+.payment-result-card {
+  border-radius: 8px;
+}
+
+.payment-result-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.payment-result-icon.success {
+  background-color: #198754;
+}
+
+.payment-result-icon.failed {
+  background-color: #dc3545;
+}
+
+.payment-checkout-card {
+  border-radius: 8px;
+}
+
+.payment-checkout-list .list-group-item {
+  border-color: #edf0f2;
+}
+
+.payment-checkout-total {
+  color: #198754;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.admin-report-card {
+  border-radius: 8px;
+}
+
+.admin-report-filter {
+  min-width: min(100%, 720px);
+}
+
+.revenue-chart {
+  min-height: 260px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 16px 4px 4px;
+}
+
+.revenue-chart-item {
+  min-width: 72px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.revenue-chart-value {
+  min-height: 34px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #198754;
+  text-align: center;
+}
+
+.revenue-chart-bar-wrap {
+  height: 180px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.revenue-chart-bar {
+  width: min(42px, 80%);
+  min-height: 12px;
+  border-radius: 6px 6px 0 0;
+  background: #198754;
+}
+
+.revenue-chart-label {
+  min-height: 32px;
+  font-size: 0.78rem;
+  color: #6c757d;
+  text-align: center;
+}
