@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { Container, Row, Col, Card, Button, Modal, Form, FloatingLabel } from "react-bootstrap";
-import { authApis, endpoint } from "../configs/Apis";
-import MySpinner from "./layout/MySpinner";
+import { authApis, endpoint } from "../../configs/Apis";
+import MySpinner from "../../component/layout/MySpinner";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-import dogAvatar from "../assets/images/dog-placeholder.png";
-import catAvatar from "../assets/images/cat-placeholder.png";
-import otherAvatar from "../assets/images/other-pet-placeholder.png";
+import dogAvatar from "../../assets/images/dog-placeholder.png";
+import catAvatar from "../../assets/images/cat-placeholder.png";
+import otherAvatar from "../../assets/images/other-pet-placeholder.png";
 
 
 const Pet = () => {

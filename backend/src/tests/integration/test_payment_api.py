@@ -32,14 +32,18 @@ def authenticate(ctx, user):
     ctx.client.force_authenticate(user=user)
 
 
-def test_pet_owner_can_create_view_list_and_confirm_payment(payment_context):
+def test_pet_owner_can_create_view_list_and_start_vnpay_payment(payment_context, settings):
     authenticate(payment_context, payment_context.owner)
+    settings.VNPAY_TMN_CODE = "TESTCODE"
+    settings.VNPAY_HASH_SECRET = "TESTSECRET"
+    settings.VNPAY_PAYMENT_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    settings.VNPAY_RETURN_URL = "http://localhost:5173/payment-result"
 
     create_response = payment_context.client.post(
         reverse("payment-list-create"),
         {
             "appointment_id": payment_context.appointment.id,
-            "method": Payment.METHOD_MOCK_ONLINE,
+            "method": Payment.METHOD_VNPAY,
         },
         format="json",
     )
@@ -49,8 +53,8 @@ def test_pet_owner_can_create_view_list_and_confirm_payment(payment_context):
     detail_response = payment_context.client.get(
         reverse("payment-detail", kwargs={"payment_id": payment_id}),
     )
-    confirm_response = payment_context.client.post(
-        reverse("payment-confirm", kwargs={"payment_id": payment_id}),
+    create_url_response = payment_context.client.post(
+        reverse("payment-vnpay-create-url", kwargs={"payment_id": payment_id}),
         format="json",
     )
 
@@ -60,10 +64,10 @@ def test_pet_owner_can_create_view_list_and_confirm_payment(payment_context):
     assert len(list_response.data["data"]) == 1
     assert detail_response.status_code == status.HTTP_200_OK
     assert detail_response.data["data"]["id"] == payment_id
-    assert confirm_response.status_code == status.HTTP_200_OK
-    assert confirm_response.data["data"]["status"] == Payment.STATUS_PAID
+    assert create_url_response.status_code == status.HTTP_200_OK
+    assert create_url_response.data["data"]["payment_url"].startswith(settings.VNPAY_PAYMENT_URL)
     payment_context.appointment.refresh_from_db()
-    assert payment_context.appointment.status == Appointment.STATUS_COMPLETED
+    assert payment_context.appointment.status == Appointment.STATUS_WAITING_PAYMENT
 
 
 def test_pet_owner_cannot_pay_another_owners_appointment(payment_context):
@@ -73,7 +77,7 @@ def test_pet_owner_cannot_pay_another_owners_appointment(payment_context):
         reverse("payment-list-create"),
         {
             "appointment_id": payment_context.appointment.id,
-            "method": Payment.METHOD_MOCK_ONLINE,
+            "method": Payment.METHOD_VNPAY,
         },
         format="json",
     )

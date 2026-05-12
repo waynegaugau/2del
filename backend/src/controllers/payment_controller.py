@@ -1,4 +1,6 @@
 from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from src.common.permissions import IsPetOwnerRole
@@ -16,7 +18,7 @@ class PaymentListCreateAPIView(APIView):
     def get(self, request):
         payments = PaymentService.get_user_payments(request.user)
         serializer = PaymentSerializer(payments, many=True)
-        return success_response(serializer.data, "Lấy danh sách thanh toán thành công")
+        return success_response(serializer.data, "Lay danh sach thanh toan thanh cong")
 
     def post(self, request):
         serializer = PaymentCreateSerializer(data=request.data)
@@ -26,7 +28,7 @@ class PaymentListCreateAPIView(APIView):
         output = PaymentSerializer(payment)
         return success_response(
             output.data,
-            "Tạo thanh toán thành công",
+            "Tao thanh toan thanh cong",
             status.HTTP_201_CREATED,
         )
 
@@ -37,13 +39,47 @@ class PaymentDetailAPIView(APIView):
     def get(self, request, payment_id):
         payment = PaymentService.get_payment_detail(request.user, payment_id)
         serializer = PaymentSerializer(payment)
-        return success_response(serializer.data, "Lấy chi tiết thanh toán thành công")
+        return success_response(serializer.data, "Lay chi tiet thanh toan thanh cong")
 
 
-class PaymentConfirmAPIView(APIView):
+class VnpayCreatePaymentUrlAPIView(APIView):
     permission_classes = [IsPetOwnerRole]
 
     def post(self, request, payment_id):
-        payment = PaymentService.confirm_payment(request.user, payment_id)
-        serializer = PaymentSerializer(payment)
-        return success_response(serializer.data, "Xác nhận thanh toán thành công")
+        payment_url = PaymentService.create_vnpay_payment_url(
+            request.user,
+            payment_id,
+            request,
+        )
+        return success_response(
+            {"payment_url": payment_url},
+            "Tao URL thanh toan VNPAY thanh cong",
+        )
+
+
+class VnpayIpnAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query_params = (
+            request.query_params.dict()
+            if hasattr(request.query_params, "dict")
+            else dict(request.query_params)
+        )
+        result = PaymentService.handle_vnpay_ipn(query_params)
+        return Response(result)
+
+
+class VnpayReturnAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query_params = (
+            request.query_params.dict()
+            if hasattr(request.query_params, "dict")
+            else dict(request.query_params)
+        )
+        result = PaymentService.handle_vnpay_return(query_params)
+        return success_response(result, "Xac nhan ket qua thanh toan VNPAY thanh cong")

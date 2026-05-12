@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Badge, Spinner, Card, Breadcrumb } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import { authApis, endpoint } from "../configs/Apis";
-import MedicalRecordDetailModal from "./MedicalRecordDetailModal"; 
+import { authApis, endpoint } from "../../configs/Apis";
+import MedicalRecordDetailModal from "../../component/MedicalRecordDetailModal"; 
 import moment from "moment";
 
 const PetMedicalHistory = () => {

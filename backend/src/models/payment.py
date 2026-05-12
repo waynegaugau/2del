@@ -6,11 +6,11 @@ from src.common.base_model import TimeStampedModel
 
 class Payment(TimeStampedModel):
     METHOD_CASH = "CASH"
-    METHOD_MOCK_ONLINE = "MOCK_ONLINE"
+    METHOD_VNPAY = "VNPAY"
 
     METHOD_CHOICES = [
         (METHOD_CASH, "Cash"),
-        (METHOD_MOCK_ONLINE, "Mock Online"),
+        (METHOD_VNPAY, "VNPAY"),
     ]
 
     STATUS_PENDING = "PENDING"
@@ -44,7 +44,7 @@ class Payment(TimeStampedModel):
     method = models.CharField(
         max_length=20,
         choices=METHOD_CHOICES,
-        default=METHOD_MOCK_ONLINE,
+        default=METHOD_VNPAY,
     )
     status = models.CharField(
         max_length=20,

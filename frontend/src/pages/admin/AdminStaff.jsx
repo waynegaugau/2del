@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal, Form, Card, Badge, Spinner, Col, Row } from "react-bootstrap";
-import { authApis, endpoint } from "../../../configs/Apis";
+import { authApis, endpoint } from "../../configs/Apis";
 import toast from "react-hot-toast";
 
 const AdminStaff = () => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Container, Form, Button, Row, Col, Card, FloatingLabel, Alert } from "react-bootstrap";
-import { authApis, endpoint } from "../configs/Apis";
-import MySpinner from "./layout/MySpinner";
+import { authApis, endpoint } from "../../configs/Apis";
+import MySpinner from "../../component/layout/MySpinner";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 

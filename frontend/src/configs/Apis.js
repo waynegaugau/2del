@@ -22,6 +22,9 @@ export const endpoint = {
     'services_by_clinic': (clinicId) => `/clinics/${clinicId}/services/`,
     'users': '/users/',
     'admin_staffs': '/admin/staffs/', 
+    'admin_report_overview': '/admin/reports/overview/',
+    'admin_report_revenue': '/admin/reports/revenue/',
+    'admin_report_clinics': '/admin/reports/clinics/',
     // Appointments (Chung & Staff)
     'appointments': '/appointments/',
     'staff_clinic_appointments': '/appointments/clinic/', // Mới bổ sung
@@ -63,6 +66,11 @@ export const endpoint = {
     'owner_medical_record_by_app': (appId) => `/owner/appointments/${appId}/medical-record/`,
     'owner_medical_record_detail': (recordId) => `/owner/medical-records/${recordId}/`,
     'owner_medical_record_prescription': (recordId) => `/owner/medical-records/${recordId}/prescription/`,
+
+    // Payments
+    'payment_detail': (paymentId) => `/payments/${paymentId}/`,
+    'payment_vnpay_create_url': (paymentId) => `/payments/${paymentId}/vnpay/create-url/`,
+    'payment_vnpay_return': '/payments/vnpay/return/',
 
 };
 

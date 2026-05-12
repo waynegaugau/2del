@@ -1,8 +1,8 @@
-import { useContext } from 'react';
-import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { MyUserContext, MyDipatcherContext } from '../../configs/MyContexts';
-import './styles/Header.css';
+import { useContext } from "react";
+import { Navbar, Nav, Container, NavDropdown } from "react-bootstrap";
+import { NavLink, useNavigate } from "react-router-dom";
+import { MyUserContext, MyDipatcherContext } from "../../configs/MyContexts";
+import "./styles/Header.css";
 
 const Header = () => {
     const user = useContext(MyUserContext);
@@ -30,7 +30,9 @@ const Header = () => {
                                 <Nav.Link as={NavLink} to="/staff/appointments" className="mx-2 fw-semibold text-warning">
                                     Quản lý lịch hẹn
                                 </Nav.Link>
-                                <Nav.Link as={NavLink} to="/staff/medicines">Quản lý thuốc</Nav.Link>
+                                <Nav.Link as={NavLink} to="/staff/medicines" className="mx-2 fw-semibold">
+                                    Quản lý thuốc
+                                </Nav.Link>
                             </>
                         )}
 
@@ -47,9 +49,18 @@ const Header = () => {
 
                         {user && user.role === "ADMIN" && (
                             <>
-                                <Nav.Link as={NavLink} to="/admin/clinics">Phòng khám</Nav.Link>
-                                <Nav.Link as={NavLink} to="/admin/staffs">Nhân viên</Nav.Link>
-                                <Nav.Link as={NavLink} to="/admin/services">Dịch vụ</Nav.Link>
+                                <Nav.Link as={NavLink} to="/admin/reports" className="mx-2 fw-semibold">
+                                    Báo cáo
+                                </Nav.Link>
+                                <Nav.Link as={NavLink} to="/admin/clinics" className="mx-2 fw-semibold">
+                                    Phòng khám
+                                </Nav.Link>
+                                <Nav.Link as={NavLink} to="/admin/staffs" className="mx-2 fw-semibold">
+                                    Nhân viên
+                                </Nav.Link>
+                                <Nav.Link as={NavLink} to="/admin/services" className="mx-2 fw-semibold">
+                                    Dịch vụ
+                                </Nav.Link>
                             </>
                         )}
                     </Nav>

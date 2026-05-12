@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { FaStethoscope, FaSyringe, FaHospital, FaVial, FaCut, FaPaw } from 'react-icons/fa';
 
 // Nhớ đảm bảo bạn có ảnh ở đường dẫn: src/assets/images/hero-image.png
-import HeroPhoto from "../assets/images/hero-image.png"; 
+import HeroPhoto from "../../assets/images/hero-image.png"; 
 import "./styles/Home.css"; 
 
 const Home = () => {

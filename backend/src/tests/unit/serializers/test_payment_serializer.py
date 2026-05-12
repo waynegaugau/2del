@@ -12,7 +12,7 @@ def test_payment_create_serializer_accepts_valid_payload():
     serializer = PaymentCreateSerializer(
         data={
             "appointment_id": 1,
-            "method": Payment.METHOD_MOCK_ONLINE,
+            "method": Payment.METHOD_VNPAY,
             "note": "Pay online",
         },
     )
@@ -27,6 +27,7 @@ def test_payment_serializer_outputs_related_names():
 
     assert data["id"] == payment.id
     assert data["appointment_id"] == payment.appointment_id
+    assert data["appointment_time"] is not None
     assert data["pet_name"] == payment.appointment.pet.name
     assert data["service_name"] == payment.appointment.service.name
     assert data["owner_name"] == payment.owner.full_name

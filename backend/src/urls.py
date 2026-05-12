@@ -42,9 +42,11 @@ from src.controllers.prescription_controller import (
     PetOwnerMedicalRecordPrescriptionAPIView,
 )
 from src.controllers.payment_controller import (
-    PaymentConfirmAPIView,
     PaymentDetailAPIView,
     PaymentListCreateAPIView,
+    VnpayCreatePaymentUrlAPIView,
+    VnpayIpnAPIView,
+    VnpayReturnAPIView,
 )
 from src.controllers.report_controller import (
     AdminClinicReportAPIView,
@@ -116,5 +118,7 @@ urlpatterns = [
     # Payments
     path("payments/", PaymentListCreateAPIView.as_view(), name="payment-list-create"),
     path("payments/<int:payment_id>/", PaymentDetailAPIView.as_view(), name="payment-detail"),
-    path("payments/<int:payment_id>/confirm/", PaymentConfirmAPIView.as_view(), name="payment-confirm"),
+    path("payments/<int:payment_id>/vnpay/create-url/", VnpayCreatePaymentUrlAPIView.as_view(), name="payment-vnpay-create-url"),
+    path("payments/vnpay/ipn/", VnpayIpnAPIView.as_view(), name="payment-vnpay-ipn"),
+    path("payments/vnpay/return/", VnpayReturnAPIView.as_view(), name="payment-vnpay-return"),
 ]
