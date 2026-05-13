@@ -55,7 +55,7 @@ Content-Type: application/json
 | Pet gender | `MALE`, `FEMALE` |
 | Service type | `EXAM`, `GROOMING`, `VACCINE`, `OTHER` |
 | Appointment status | `PENDING`, `CONFIRMED`, `CHECKED_IN`, `IN_PROGRESS`, `WAITING_PAYMENT`, `COMPLETED`, `CANCELLED`, `NO_SHOW` |
-| Payment method | `CASH`, `MOCK_ONLINE` |
+| Payment method | `CASH`, `VNPAY` |
 | Payment status | `PENDING`, `PAID`, `FAILED`, `CANCELLED` |
 
 ---
@@ -558,7 +558,7 @@ Response mẫu:
       "id": 1,
       "appointment_id": 1,
       "amount": "110000.00",
-      "method": "MOCK_ONLINE",
+      "method": "VNPAY",
       "status": "PENDING",
       "paid_at": null,
       "transaction_code": null
@@ -876,7 +876,7 @@ Request body:
 ```json
 {
   "appointment_id": 1,
-  "method": "MOCK_ONLINE",
+  "method": "VNPAY",
   "note": "Thanh toán online"
 }
 ```
@@ -896,36 +896,87 @@ GET /payments/{payment_id}/
 
 Quyền: `PET_OWNER`
 
-### 9.4. Chủ thú cưng xác nhận thanh toán mock online
+### 9.4. Chủ thú cưng tạo URL thanh toán VNPAY
 
 ```http
-POST /payments/{payment_id}/confirm/
+POST /payments/{payment_id}/vnpay/create-url/
 ```
 
 Quyền: `PET_OWNER`
 
 Ghi chú:
 
-- Chỉ hỗ trợ xác nhận payment có `method = MOCK_ONLINE`.
+- Chỉ chủ của payment mới được tạo URL thanh toán.
 - Payment phải ở trạng thái `PENDING`.
-- Sau khi xác nhận thành công, payment chuyển sang `PAID`, có `paid_at` và `transaction_code`, appointment chuyển sang `COMPLETED`.
+- Nếu payment chưa có `method = VNPAY`, backend sẽ cập nhật sang `VNPAY`.
+- URL thanh toán có thời hạn 15 phút theo tham số `vnp_ExpireDate`.
+- Backend ký tham số bằng `VNPAY_HASH_SECRET` và dùng cấu hình `VNPAY_TMN_CODE`, `VNPAY_PAYMENT_URL`, `VNPAY_RETURN_URL`.
 
 Response mẫu:
 
 ```json
 {
   "success": true,
-  "message": "Xác nhận thanh toán thành công",
+  "message": "Tạo URL thanh toán VNPAY thành công",
   "data": {
-    "id": 1,
+    "payment_url": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=11000000&vnp_Command=pay&vnp_TmnCode=DEMO&vnp_TxnRef=1&vnp_SecureHash=..."
+  }
+}
+```
+
+### 9.5. VNPAY IPN callback
+
+```http
+GET /payments/vnpay/ipn/?vnp_TxnRef=1&vnp_Amount=11000000&vnp_ResponseCode=00&vnp_SecureHash=...
+```
+
+Quyền: Public callback từ VNPAY
+
+Ghi chú:
+
+- Endpoint này không yêu cầu JWT vì do VNPAY gọi server-to-server.
+- Backend kiểm tra chữ ký VNPAY, mã payment trong `vnp_TxnRef` và số tiền `vnp_Amount`.
+- Nếu `vnp_ResponseCode = 00` và payment đang `PENDING`, payment chuyển sang `PAID`, ghi `paid_at`, `transaction_code`, và appointment chuyển sang `COMPLETED`.
+- Nếu thanh toán thất bại, payment chuyển sang `FAILED`.
+- Response dùng format IPN của VNPAY, không bọc trong `success_response`.
+
+Response mẫu:
+
+```json
+{
+  "RspCode": "00",
+  "Message": "Confirm Success"
+}
+```
+
+### 9.6. VNPAY return callback
+
+```http
+GET /payments/vnpay/return/?vnp_TxnRef=1&vnp_Amount=11000000&vnp_ResponseCode=00&vnp_SecureHash=...
+```
+
+Quyền: Public redirect từ VNPAY
+
+Ghi chú:
+
+- Endpoint này dùng khi trình duyệt người dùng được VNPAY chuyển về `VNPAY_RETURN_URL`.
+- Backend kiểm tra chữ ký, payment và số tiền tương tự IPN.
+- Nếu giao dịch thành công và payment còn `PENDING`, backend cập nhật payment sang `PAID` và appointment sang `COMPLETED`.
+- Nếu payment đã được IPN xử lý trước đó, endpoint trả về trạng thái hiện tại của payment.
+
+Response mẫu:
+
+```json
+{
+  "success": true,
+  "message": "Xác nhận kết quả thanh toán VNPAY thành công",
+  "data": {
+    "payment_id": 1,
     "appointment_id": 1,
-    "pet_name": "Milu",
-    "service_name": "Khám tổng quát",
-    "amount": "110000.00",
-    "method": "MOCK_ONLINE",
-    "status": "PAID",
-    "paid_at": "2026-05-08T14:00:00+07:00",
-    "transaction_code": "PAY-1-20260508070000"
+    "payment_status": "PAID",
+    "appointment_status": "COMPLETED",
+    "is_success": true,
+    "response_code": "00"
   }
 }
 ```
@@ -1157,8 +1208,9 @@ Authorization: Bearer <access_token>
 4. Xem dịch vụ phòng khám: `GET /clinics/{clinic_id}/services/`.
 5. Đặt lịch: `POST /appointments/`.
 6. Staff xác nhận/check-in/start/complete lịch. Khi complete, appointment chuyển sang `WAITING_PAYMENT` và payment `PENDING` được tạo tự động.
-7. Pet-owner xác nhận payment: `POST /payments/{payment_id}/confirm/`.
-8. Sau khi payment `PAID`, appointment chuyển sang `COMPLETED`.
+7. Pet-owner tạo URL thanh toán: `POST /payments/{payment_id}/vnpay/create-url/`.
+8. Frontend redirect người dùng sang `data.payment_url` của VNPAY sandbox.
+9. Sau khi VNPAY chuyển về `GET /payments/vnpay/return/` hoặc gọi `GET /payments/vnpay/ipn/`, payment `PAID` và appointment chuyển sang `COMPLETED` nếu giao dịch thành công.
 
 ### 12.3. Luồng staff khám và kê đơn
 
