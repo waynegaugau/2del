@@ -10,16 +10,19 @@ import MyUserReducer from "./reducers/MyUserReducer";
 import Header from "./component/layout/Header";
 import Footer from "./component/layout/Footer";
 import MyToaster from "./component/layout/MyToaster";
+import ProtectedRoute from "./component/ProtectedRoute";
 
 import Home from "./pages/public/Home";
 import Register from "./pages/public/Register";
 import Login from "./pages/public/Login";
+import ChangePassword from "./pages/user/ChangePassword";
 import Pet from "./pages/owner/Pet";
 import Booking from "./pages/owner/Booking";
 import MyAppointments from "./pages/owner/MyAppointments";
 import PaymentCheckout from "./pages/owner/PaymentCheckout";
 import PaymentResult from "./pages/owner/PaymentResult";
 import PetMedicalHistory from "./pages/owner/PetMedicalHistory";
+import OwnerProfile from "./pages/owner/OwnerProfile";
 import StaffAppointmentList from "./pages/staff/StaffAppointmentList";
 import MedicineManagement from "./pages/staff/MedicineManagement";
 import StaffPetList from "./pages/staff/StaffPetList";
@@ -29,6 +32,12 @@ import AdminStaff from "./pages/admin/AdminStaff";
 import AdminService from "./pages/admin/AdminService";
 
 import "./App.css";
+
+const ownerRoute = (children) => (
+  <ProtectedRoute allowedRole="PET_OWNER">
+    {children}
+  </ProtectedRoute>
+);
 
 const App = () => {
   const [user, dispatch] = useReducer(MyUserReducer, cookie.load("user") || null);
@@ -52,13 +61,16 @@ const App = () => {
               <Route path="/login" element={<Login />} />
 
               {/* Owner */}
-              <Route path="/pets" element={<Pet />} />
-              <Route path="/my-pets" element={<Pet />} />
-              <Route path="/my-pets/:petId/history" element={<PetMedicalHistory />} />
-              <Route path="/booking" element={<Booking />} />
-              <Route path="/appointments" element={<MyAppointments />} />
-              <Route path="/payments/:paymentId/checkout" element={<PaymentCheckout />} />
-              <Route path="/payment-result" element={<PaymentResult />} />
+              <Route path="/pets" element={ownerRoute(<Pet />)} />
+              <Route path="/my-pets" element={ownerRoute(<Pet />)} />
+              <Route path="/my-pets/:petId/history" element={ownerRoute(<PetMedicalHistory />)} />
+              <Route path="/booking" element={ownerRoute(<Booking />)} />
+              <Route path="/appointments" element={ownerRoute(<MyAppointments />)} />
+              <Route path="/profile" element={ownerRoute(<OwnerProfile />)} />
+              <Route path="/editProfile" element={ownerRoute(<OwnerProfile />)} />
+              <Route path="/change-password" element={ownerRoute(<><OwnerProfile /><ChangePassword /></>)} />
+              <Route path="/payments/:paymentId/checkout" element={ownerRoute(<PaymentCheckout />)} />
+              <Route path="/payment-result" element={ownerRoute(<PaymentResult />)} />
 
               {/* Staff */}
               <Route path="/staff/appointments" element={<StaffAppointmentList />} />

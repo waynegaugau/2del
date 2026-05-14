@@ -20,6 +20,8 @@ Hệ thống có 3 tác nhân chính:
 
 -   Đăng ký, đăng nhập, đăng xuất và quản lý thông tin cá nhân
 
+-   Xem hồ sơ cá nhân, cập nhật họ tên/số điện thoại/địa chỉ và đổi mật khẩu
+
 -   Tạo, xem, cập nhật và xóa mềm hồ sơ thú cưng
 
 -   Xem danh sách phòng khám và dịch vụ
@@ -81,6 +83,8 @@ Hệ thống có 3 tác nhân chính:
 -   Staff chỉ được thao tác dữ liệu thuộc phòng khám của mình.
 
 -   Chủ thú cưng chỉ được thao tác dữ liệu thuộc tài khoản của mình.
+
+-   Các màn hình của chủ thú cưng trên frontend phải yêu cầu đăng nhập và đúng role `PET_OWNER`.
 
 -   Dữ liệu thú cưng là trung tâm của hệ thống.
 
@@ -1223,6 +1227,8 @@ Dữ liệu trả về:
 -   Pet-owner phải bị giới hạn theo dữ liệu sở hữu.
 
 -   Password được lưu dưới dạng hash thông qua Django authentication.
+
+-   Khi đổi mật khẩu, hệ thống phải kiểm tra mật khẩu hiện tại, validate mật khẩu mới và chỉ lưu mật khẩu dưới dạng hash.
 
 ### 7.2 Data Integrity
 

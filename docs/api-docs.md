@@ -192,6 +192,31 @@ Request body:
 }
 ```
 
+### 2.7. Đổi mật khẩu
+
+```http
+PUT /auth/change-password/
+```
+
+Quyền: Authenticated
+
+Request body:
+
+```json
+{
+  "old_password": "OldPass123!",
+  "new_password": "NewPass123!",
+  "confirm_password": "NewPass123!"
+}
+```
+
+Ghi chú:
+
+- `old_password` phải khớp với mật khẩu hiện tại của người dùng.
+- `new_password` phải thỏa các rule validate mật khẩu của Django.
+- `confirm_password` phải trùng với `new_password`.
+- Sau khi đổi mật khẩu thành công, người dùng có thể đăng nhập bằng mật khẩu mới.
+
 ---
 
 ## 3. Pet Owner APIs

@@ -136,3 +136,68 @@ html, body, #root {
   color: #6c757d;
   text-align: center;
 }
+
+.owner-profile-page .card {
+  border-radius: 8px;
+}
+
+.owner-profile-card {
+  position: sticky;
+  top: 96px;
+}
+
+.owner-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #198754;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.owner-profile-contact {
+  display: grid;
+  gap: 14px;
+}
+
+.owner-profile-contact div {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+  gap: 10px;
+  color: #495057;
+}
+
+.owner-profile-stat {
+  min-height: 132px;
+}
+
+.owner-profile-stat svg {
+  font-size: 1.4rem;
+}
+
+.owner-profile-stat-value {
+  min-height: 38px;
+  color: #212529;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.owner-profile-summary {
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid #edf0f2;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+@media (max-width: 991.98px) {
+  .owner-profile-card {
+    position: static;
+  }
+}

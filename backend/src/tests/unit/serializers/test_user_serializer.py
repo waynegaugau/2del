@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from src.serializers.user_serializer import (
     AdminStaffCreateSerializer,
     AdminStaffUpdateSerializer,
+    ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
     RefreshTokenSerializer,
@@ -50,6 +51,14 @@ def test_user_auth_and_profile_serializers_accept_valid_payloads(mocker):
     assert LogoutSerializer(data={"refresh_token": "token"}).is_valid()
     assert RefreshTokenSerializer(data={"refresh_token": "token"}).is_valid()
     assert UpdateProfileSerializer(data={"full_name": "Owner"}, partial=True).is_valid()
+    assert ChangePasswordSerializer(
+        data={
+            "old_password": "OldPass123!",
+            "new_password": "NewPass123!",
+            "confirm_password": "NewPass123!",
+        },
+        context={"user": None},
+    ).is_valid()
 
 
 def test_user_serializers_reject_duplicates_and_invalid_values(mocker):
@@ -102,3 +111,25 @@ def test_user_serializers_reject_duplicates_and_invalid_values(mocker):
     )
     assert not update_with_bad_password.is_valid()
     assert "password" in update_with_bad_password.errors
+
+    change_with_mismatched_confirmation = ChangePasswordSerializer(
+        data={
+            "old_password": "OldPass123!",
+            "new_password": "NewPass123!",
+            "confirm_password": "DifferentPass123!",
+        },
+        context={"user": existing_user},
+    )
+    assert not change_with_mismatched_confirmation.is_valid()
+    assert "confirm_password" in change_with_mismatched_confirmation.errors
+
+    change_with_bad_password = ChangePasswordSerializer(
+        data={
+            "old_password": "OldPass123!",
+            "new_password": "weak",
+            "confirm_password": "weak",
+        },
+        context={"user": existing_user},
+    )
+    assert not change_with_bad_password.is_valid()
+    assert "new_password" in change_with_bad_password.errors

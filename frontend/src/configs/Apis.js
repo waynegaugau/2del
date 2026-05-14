@@ -11,6 +11,7 @@ export const endpoint = {
     'refresh': '/auth/refresh/',
     'logout': '/auth/logout/',
     'current_user': '/auth/profile/',
+    'change_password': '/auth/change-password/',
 
     // Pets
     'pets': '/pets/',

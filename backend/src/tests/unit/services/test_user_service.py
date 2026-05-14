@@ -243,6 +243,53 @@ def test_update_profile_updates_allowed_fields_and_saves(mocker):
     save.assert_called_once_with(user)
 
 
+def test_change_password_checks_current_password_and_saves(mocker):
+    # Arrange
+    user = SimpleNamespace(
+        id=1,
+        check_password=mocker.Mock(return_value=True),
+        set_password=mocker.Mock(),
+    )
+    mocker.patch("src.services.user_service.UserRepository.get_by_id", return_value=user)
+    save = mocker.patch("src.services.user_service.UserRepository.save", return_value=user)
+
+    # Act
+    result = UserService.change_password(1, "old-password", "new-password")
+
+    # Assert
+    assert result == user
+    user.check_password.assert_called_once_with("old-password")
+    user.set_password.assert_called_once_with("new-password")
+    save.assert_called_once_with(user)
+
+
+def test_change_password_rejects_wrong_current_password(mocker):
+    # Arrange
+    user = SimpleNamespace(
+        id=1,
+        check_password=mocker.Mock(return_value=False),
+        set_password=mocker.Mock(),
+    )
+    mocker.patch("src.services.user_service.UserRepository.get_by_id", return_value=user)
+    save = mocker.patch("src.services.user_service.UserRepository.save")
+
+    # Act / Assert
+    with pytest.raises(BadRequestException):
+        UserService.change_password(1, "wrong-password", "new-password")
+
+    user.set_password.assert_not_called()
+    save.assert_not_called()
+
+
+def test_change_password_rejects_missing_user(mocker):
+    # Arrange
+    mocker.patch("src.services.user_service.UserRepository.get_by_id", return_value=None)
+
+    # Act / Assert
+    with pytest.raises(NotFoundException):
+        UserService.change_password(999999, "old-password", "new-password")
+
+
 def test_create_staff_assigns_clinic_and_staff_role(mocker):
     # Arrange
     clinic = SimpleNamespace(id=10)

@@ -1,5 +1,6 @@
 from django.urls import path
 from src.controllers.user_controller import (
+    ChangePasswordAPIView,
     RegisterAPIView,
     LoginAPIView,
     LogoutAPIView,
@@ -67,6 +68,7 @@ urlpatterns = [
     path("auth/refresh/", RefreshTokenAPIView.as_view(), name="token-refresh"),
     path("auth/logout/", LogoutAPIView.as_view(), name="logout"),
     path("auth/profile/", ProfileAPIView.as_view(), name="profile"),
+    path("auth/change-password/", ChangePasswordAPIView.as_view(), name="change-password"),
     path("admin/staffs/", StaffAdminListCreateAPIView.as_view(), name="admin-staff-list-create"),
     path("admin/staffs/<int:staff_id>/", StaffAdminDetailAPIView.as_view(), name="admin-staff-detail"),
     path("admin/reports/overview/", AdminReportOverviewAPIView.as_view(), name="admin-report-overview"),

@@ -84,6 +84,18 @@ class UserService:
         return UserRepository.save(user)
 
     @staticmethod
+    def change_password(user_id: int, old_password: str, new_password: str):
+        user = UserRepository.get_by_id(user_id)
+        if not user:
+            raise NotFoundException("Không tìm thấy người dùng.")
+
+        if not user.check_password(old_password):
+            raise BadRequestException("Mật khẩu hiện tại không chính xác.")
+
+        user.set_password(new_password)
+        return UserRepository.save(user)
+
+    @staticmethod
     def get_staff_list(clinic_id=None, is_active=None):
         return UserRepository.get_staff_list(clinic_id=clinic_id, is_active=is_active)
 

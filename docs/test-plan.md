@@ -24,7 +24,8 @@
 ## 5. Các kịch bản chính
 | Module | Nội dung cần kiểm tra | Kết quả mong đợi |
 |--------|------------------------|------------------|
-| Authentication | Đăng ký, đăng nhập, refresh token, logout | Trả về token hợp lệ, chặn tài khoản/thông tin sai |
+| Authentication | Đăng ký, đăng nhập, refresh token, logout, đổi mật khẩu | Trả về token hợp lệ, chặn tài khoản/thông tin sai, mật khẩu mới có hiệu lực sau khi đổi |
+| Hồ sơ cá nhân | Owner xem/cập nhật hồ sơ và đổi mật khẩu trên giao diện profile | Thông tin hiển thị đúng, cập nhật thành công có toast, đổi mật khẩu hiện trong dialog |
 | Phân quyền | Owner, staff, admin truy cập đúng màn hình/API | Role không phù hợp bị từ chối |
 | Thú cưng | Thêm, sửa, xóa, xem danh sách thú cưng | Dữ liệu được lưu và chỉ owner liên quan được xem |
 | Đặt lịch | Tạo lịch, xem lịch, cập nhật trạng thái | Trạng thái lịch thay đổi đúng quy trình |
@@ -34,6 +35,21 @@
 | Admin | Quản lý clinic, staff, service | Admin thêm/sửa/xóa/xem dữ liệu đúng |
 | Báo cáo | Thống kê doanh thu, trạng thái lịch hẹn | Số liệu tổng hợp đúng theo bộ lọc |
 | Frontend | Form validation, loading, toast, protected route | Giao diện phản hồi rõ ràng, không crash |
+
+### 5.1. Kịch bản chi tiết bổ sung cho hồ sơ owner
+
+| Mã | Kịch bản | Kết quả mong đợi |
+|----|----------|------------------|
+| PROF-01 | Owner đăng nhập và mở `/profile` | Hiển thị họ tên, username, email, số điện thoại, địa chỉ, thống kê thú cưng/lịch hẹn |
+| PROF-02 | Owner cập nhật họ tên/số điện thoại/địa chỉ hợp lệ | API `PUT /auth/profile/` thành công, giao diện và cookie/context user được cập nhật, hiển thị toast thành công |
+| PROF-03 | Owner bấm nút "Đổi mật khẩu" trong trang profile | Dialog đổi mật khẩu hiển thị phủ trên nền trang profile |
+| PROF-04 | Owner nhập đúng mật khẩu hiện tại và xác nhận mật khẩu mới khớp | API `PUT /auth/change-password/` thành công, hiển thị toast thành công, quay về `/profile` |
+| PROF-05 | Owner nhập sai mật khẩu hiện tại | API trả lỗi, dialog vẫn mở và hiển thị toast lỗi |
+| PROF-06 | Owner nhập xác nhận mật khẩu mới không khớp | Frontend/backend báo lỗi, không đổi mật khẩu |
+| PROF-07 | Sau khi đổi mật khẩu, đăng nhập bằng mật khẩu cũ | Đăng nhập thất bại |
+| PROF-08 | Sau khi đổi mật khẩu, đăng nhập bằng mật khẩu mới | Đăng nhập thành công |
+| AUTH-01 | Chưa đăng nhập truy cập `/profile`, `/change-password`, `/pets`, `/appointments` | Frontend chuyển về `/login` |
+| AUTH-02 | User không phải `PET_OWNER` truy cập route owner | Frontend chuyển về `/` |
 
 ## 6. Lệnh chạy kiểm thử
 Chạy test backend:

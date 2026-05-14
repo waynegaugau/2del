@@ -84,3 +84,49 @@ def test_profile_with_access_token_returns_current_user(auth_context):
     assert response.data["success"] is True
     assert response.data["data"]["id"] == auth_context.user.id
     assert response.data["data"]["username"] == auth_context.user.username
+
+
+def test_change_password_updates_login_credentials(auth_context):
+    login_response = login(auth_context)
+    access_token = login_response.data["data"]["access_token"]
+    auth_context.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+
+    response = auth_context.client.put(
+        reverse("change-password"),
+        {
+            "old_password": auth_context.password,
+            "new_password": "NewStrongPass123!",
+            "confirm_password": "NewStrongPass123!",
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["success"] is True
+
+    auth_context.client.credentials()
+    old_login_response = login(auth_context)
+    assert old_login_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    new_login_response = login(auth_context, password="NewStrongPass123!")
+    assert new_login_response.status_code == status.HTTP_200_OK
+    assert "access_token" in new_login_response.data["data"]
+
+
+def test_change_password_rejects_wrong_current_password(auth_context):
+    login_response = login(auth_context)
+    access_token = login_response.data["data"]["access_token"]
+    auth_context.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+
+    response = auth_context.client.put(
+        reverse("change-password"),
+        {
+            "old_password": "WrongPass123!",
+            "new_password": "NewStrongPass123!",
+            "confirm_password": "NewStrongPass123!",
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data["success"] is False
