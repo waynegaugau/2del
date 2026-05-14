@@ -177,3 +177,28 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["full_name", "phone", "address"]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=6,
+        error_messages={
+            "min_length": "Mật khẩu mới phải có ít nhất 6 ký tự.",
+            "blank": "Mật khẩu mới không được để trống.",
+        },
+    )
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": ["Mật khẩu xác nhận không khớp."]})
+
+        user = self.context.get("user")
+        try:
+            validate_password(attrs["new_password"], user=user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"new_password": list(exc.messages)}) from exc
+
+        return attrs

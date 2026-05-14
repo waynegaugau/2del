@@ -81,7 +81,7 @@ const Header = () => {
                                 id="user-dropdown"
                                 align="end"
                             >
-                                <NavDropdown.Item as={NavLink} to="/editProfile">Hồ sơ cá nhân</NavDropdown.Item>
+                                <NavDropdown.Item as={NavLink} to="/profile">Hồ sơ cá nhân</NavDropdown.Item>
                                 <NavDropdown.Item as={NavLink} to="/change-password">Đổi mật khẩu</NavDropdown.Item>
 
                                 {user.is_superuser && (

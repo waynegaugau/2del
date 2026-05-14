@@ -9,6 +9,7 @@ from src.common.responses import success_response
 from src.serializers.user_serializer import (
     AdminStaffCreateSerializer,
     AdminStaffUpdateSerializer,
+    ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
     RefreshTokenSerializer,
@@ -109,6 +110,26 @@ class ProfileAPIView(APIView):
         return success_response(
             data=output.data,
             message="Cập nhật hồ sơ thành công.",
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class ChangePasswordAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"user": request.user})
+        serializer.is_valid(raise_exception=True)
+
+        UserService.change_password(
+            request.user.id,
+            serializer.validated_data["old_password"],
+            serializer.validated_data["new_password"],
+        )
+        return success_response(
+            data=None,
+            message="Đổi mật khẩu thành công.",
             status_code=status.HTTP_200_OK,
         )
 

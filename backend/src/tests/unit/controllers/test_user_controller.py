@@ -3,6 +3,7 @@ from rest_framework import status
 
 from src.common.exceptions import BadRequestException
 from src.controllers.user_controller import (
+    ChangePasswordAPIView,
     LoginAPIView,
     LogoutAPIView,
     ProfileAPIView,
@@ -65,6 +66,21 @@ def test_user_controller_delegates_auth_profile_and_staff_flows(mocker):
 
     mocker.patch("src.controllers.user_controller.UserService.update_profile", return_value=owner)
     assert_success(ProfileAPIView().put(make_request(owner, {"full_name": "New Name"})))
+
+    change_password = mocker.patch("src.controllers.user_controller.UserService.change_password")
+    assert_success(
+        ChangePasswordAPIView().put(
+            make_request(
+                owner,
+                {
+                    "old_password": "OldPass123!",
+                    "new_password": "NewPass123!",
+                    "confirm_password": "NewPass123!",
+                },
+            ),
+        ),
+    )
+    change_password.assert_called_once_with(owner.id, "OldPass123!", "NewPass123!")
 
     mocker.patch(
         "src.controllers.user_controller.UserService.get_staff_list",
