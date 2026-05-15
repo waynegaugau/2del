@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "55312b64-fdbb-4b72-9296-6d25ad8bb001",
     "name": "Pet Care API",
-    "description": "End-to-end Postman collection for the Pet Care backend. Run requests in order after setting admin_username and admin_password in the environment.",
+    "description": "End-to-end Postman collection for the Pet Care backend, updated to match backend/src/urls.py. Run core requests in order after setting admin_username and admin_password in the environment; destructive/logout/password requests are grouped near the end for manual runs.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -35,10 +35,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Admin login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "pm.test('Admin Login success', function () { pm.expect(pm.response.code).to.eql(200); });",
                   "const json = pm.response.json();",
                   "if (json && json.data) {",
                   "  pm.environment.set('admin_token', json.data.access_token);",
+                  "  pm.environment.set('admin_refresh_token', json.data.refresh_token);",
                   "}"
                 ]
               }
@@ -121,10 +122,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Owner login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "pm.test('Owner Login success', function () { pm.expect(pm.response.code).to.eql(200); });",
                   "const json = pm.response.json();",
                   "if (json && json.data) {",
                   "  pm.environment.set('owner_token', json.data.access_token);",
+                  "  pm.environment.set('owner_refresh_token', json.data.refresh_token);",
                   "}"
                 ]
               }
@@ -157,6 +159,47 @@
           "response": []
         },
         {
+          "name": "Refresh Owner Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{owner_refresh_token}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Owner token refreshed', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('owner_token', json.data.access_token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Owner Profile",
           "request": {
             "method": "GET",
@@ -176,6 +219,38 @@
                 "profile",
                 ""
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Postman Owner Updated {{run_suffix}}\",\n  \"phone\": \"0900000001\",\n  \"address\": \"Updated Ho Chi Minh City\"\n}"
             }
           },
           "response": []
@@ -230,6 +305,57 @@
           "response": []
         },
         {
+          "name": "Get Clinic Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clinics/{{clinic_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                "{{clinic_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Clinic",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clinics/{{clinic_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                "{{clinic_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Clinic Updated {{run_suffix}}\",\n  \"address\": \"456 Updated Test Street\",\n  \"phone\": \"0900000002\",\n  \"email\": \"clinic_updated_{{run_suffix}}@example.com\",\n  \"is_active\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Create Service",
           "event": [
             {
@@ -274,6 +400,38 @@
           "response": []
         },
         {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "{{service_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General Checkup Updated {{run_suffix}}\",\n  \"service_type\": \"EXAM\",\n  \"description\": \"Updated service from Postman\",\n  \"price\": \"120000.00\",\n  \"duration_minutes\": 45,\n  \"is_active\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Create Staff",
           "event": [
             {
@@ -283,7 +441,7 @@
                 "exec": [
                   "pm.test('Staff created', function () { pm.expect(pm.response.code).to.eql(201); });",
                   "const json = pm.response.json();",
-                  "if (json && json.data) { pm.environment.set('staff_id', json.data.id); }"
+                  "if (json && json.data && json.data.id) { pm.environment.set('staff_id', json.data.id); }"
                 ]
               }
             }
@@ -319,6 +477,88 @@
           "response": []
         },
         {
+          "name": "List Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/staffs/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "staffs",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/staffs/{{staff_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "staffs",
+                "{{staff_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/staffs/{{staff_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "staffs",
+                "{{staff_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Postman Staff Updated {{run_suffix}}\",\n  \"phone\": \"0911111112\",\n  \"address\": \"Updated Clinic Staff Address\",\n  \"clinic_id\": \"{{clinic_id}}\",\n  \"is_active\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Staff Login",
           "event": [
             {
@@ -326,9 +566,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Staff login success', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "pm.test('Staff Login success', function () { pm.expect(pm.response.code).to.eql(200); });",
                   "const json = pm.response.json();",
-                  "if (json && json.data) { pm.environment.set('staff_token', json.data.access_token); }"
+                  "if (json && json.data) {",
+                  "  pm.environment.set('staff_token', json.data.access_token);",
+                  "  pm.environment.set('staff_refresh_token', json.data.refresh_token);",
+                  "}"
                 ]
               }
             }
@@ -454,6 +697,38 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pets/{{pet_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                "{{pet_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Milu Updated {{run_suffix}}\",\n  \"species\": \"DOG\",\n  \"breed\": \"Poodle\",\n  \"gender\": \"MALE\",\n  \"birth_date\": \"2022-01-15\",\n  \"weight\": \"4.80\",\n  \"note\": \"Updated from Postman\"\n}"
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -576,6 +851,62 @@
           "response": []
         },
         {
+          "name": "Get Appointment Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_time\": \"{{appointment_time}}\",\n  \"note\": \"Updated appointment note from Postman\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Staff List Clinic Appointments",
           "request": {
             "method": "GET",
@@ -593,6 +924,31 @@
               "path": [
                 "appointments",
                 "clinic",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Get Clinic Appointment Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/clinic/{{appointment_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "clinic",
+                "{{appointment_id}}",
                 ""
               ]
             }
@@ -751,6 +1107,63 @@
           "response": []
         },
         {
+          "name": "Update Medical Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medical-records/{{medical_record_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medical-records",
+                "{{medical_record_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptoms\": \"Coughing and low appetite updated\",\n  \"diagnosis\": \"Mild respiratory infection updated\",\n  \"treatment\": \"Medication, rest and follow-up\",\n  \"note\": \"Updated from Postman\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff List Pet Medical Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pets/{{pet_id}}/medical-records/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                "{{pet_id}}",
+                "medical-records",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Staff Complete Appointment",
           "event": [
             {
@@ -889,6 +1302,85 @@
           "response": []
         },
         {
+          "name": "List Medicines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medicines/?status=all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medicines",
+                "?status=all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Medicine Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medicines/{{medicine_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medicines",
+                "{{medicine_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Medicine",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medicines/{{medicine_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medicines",
+                "{{medicine_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Medicine Updated {{run_suffix}}\",\n  \"unit\": \"tablet\",\n  \"description\": \"Updated medicine from Postman\",\n  \"stock_quantity\": 50,\n  \"price\": \"15000.00\",\n  \"is_active\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Create Prescription",
           "event": [
             {
@@ -942,9 +1434,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Prescription item created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "pm.test('Prescription item added', function () { pm.expect(pm.response.code).to.eql(201); });",
                   "const json = pm.response.json();",
-                  "if (json && json.data) { pm.environment.set('prescription_item_id', json.data.id); }"
+                  "if (json && json.data && json.data.id) { pm.environment.set('prescription_item_id', json.data.id); }"
                 ]
               }
             }
@@ -981,6 +1473,38 @@
           "response": []
         },
         {
+          "name": "Update Prescription Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prescription-items/{{prescription_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescription-items",
+                "{{prescription_item_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1,\n  \"dosage\": \"1 tablet\",\n  \"frequency\": \"Twice per day\",\n  \"duration_days\": 5,\n  \"instruction\": \"After meals, updated from Postman\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get Prescription By Medical Record",
           "request": {
             "method": "GET",
@@ -1001,6 +1525,62 @@
                 "prescription",
                 ""
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prescription Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prescriptions/{{prescription_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescription_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Prescription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prescriptions/{{prescription_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescription_id}}",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Updated prescription note from Postman\"\n}"
             }
           },
           "response": []
@@ -1037,51 +1617,7 @@
       "name": "07 Pet Owner - Payments",
       "item": [
         {
-          "name": "Create Payment (Manual Fallback)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Payment created', function () { pm.expect(pm.response.code).to.eql(201); });",
-                  "const json = pm.response.json();",
-                  "if (json && json.data) { pm.environment.set('payment_id', json.data.id); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{owner_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"appointment_id\": {{appointment_id}},\n  \"method\": \"MOCK_ONLINE\",\n  \"note\": \"Online mock payment from Postman\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/payments/",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "payments",
-                ""
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Confirm Payment",
+          "name": "Create VNPAY Payment URL",
           "request": {
             "method": "POST",
             "header": [
@@ -1091,15 +1627,69 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/payments/{{payment_id}}/confirm/",
+              "raw": "{{base_url}}/payments/{{payment_id}}/vnpay/create-url/",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "payments",
                 "{{payment_id}}",
-                "confirm",
+                "vnpay",
+                "create-url",
                 ""
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('VNPAY URL created', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('vnpay_payment_url', json.data.payment_url); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VNPAY Return Callback Sample",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/vnpay/return/?vnp_TxnRef={{payment_id}}&vnp_Amount={{vnpay_amount}}&vnp_ResponseCode=00&vnp_SecureHash={{vnpay_secure_hash}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "vnpay",
+                "return",
+                "?vnp_TxnRef={{payment_id}}&vnp_Amount={{vnpay_amount}}&vnp_ResponseCode=00&vnp_SecureHash={{vnpay_secure_hash}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "VNPAY IPN Callback Sample",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/vnpay/ipn/?vnp_TxnRef={{payment_id}}&vnp_Amount={{vnpay_amount}}&vnp_ResponseCode=00&vnp_SecureHash={{vnpay_secure_hash}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "vnpay",
+                "ipn",
+                "?vnp_TxnRef={{payment_id}}&vnp_Amount={{vnpay_amount}}&vnp_ResponseCode=00&vnp_SecureHash={{vnpay_secure_hash}}"
               ]
             }
           },
@@ -1232,6 +1822,313 @@
                 "admin",
                 "reports",
                 "clinics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Manual / Destructive Requests",
+      "item": [
+        {
+          "name": "Owner Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/change-password/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "change-password",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"{{owner_password}}\",\n  \"new_password\": \"{{owner_new_password}}\",\n  \"confirm_password\": \"{{owner_new_password}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{owner_refresh_token}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Prescription Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prescription-items/{{prescription_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescription-items",
+                "{{prescription_item_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Medicine",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/medicines/{{medicine_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "medicines",
+                "{{medicine_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "{{service_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/staffs/{{staff_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "staffs",
+                "{{staff_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Clinic",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clinics/{{clinic_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clinics",
+                "{{clinic_id}}",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment (Manual Fallback - only if no payment exists)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Payment created', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) { pm.environment.set('payment_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_id\": {{appointment_id}},\n  \"method\": \"VNPAY\",\n  \"note\": \"VNPAY payment from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Mark Appointment No Show",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{appointment_id}}/no-show/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointment_id}}",
+                "no-show",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pets/{{pet_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pets",
+                "{{pet_id}}",
                 ""
               ]
             }
