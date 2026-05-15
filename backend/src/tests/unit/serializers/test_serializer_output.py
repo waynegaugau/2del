@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 def test_model_serializers_render_expected_fields():
     clinic = ClinicFactory(name="Happy Paws")
-    owner = UserFactory(username="owner_serialized")
+    owner = UserFactory(username="owner_serialized", full_name="Nguyen Van A")
     staff = StaffUserFactory(clinic=clinic, full_name="Dr Staff")
     pet = PetFactory(owner=owner, name="Milu")
     service = ServiceFactory(clinic=clinic, name="Exam")
@@ -42,6 +42,7 @@ def test_model_serializers_render_expected_fields():
     assert UserSerializer(staff).data["clinic_name"] == "Happy Paws"
     assert PetSerializer(pet).data["owner_username"] == "owner_serialized"
     assert AppointmentSerializer(appointment).data["pet_name"] == "Milu"
+    assert AppointmentSerializer(appointment).data["owner_full_name"] == "Nguyen Van A"
     assert MedicineSerializer(medicine).data["clinic_name"] == "Happy Paws"
     assert MedicalRecordSerializer(record).data["staff_name"] == "Dr Staff"
     assert PrescriptionItemSerializer(item).data["medicine_name"] == "Vitamin"

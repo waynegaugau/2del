@@ -34,6 +34,7 @@ export const endpoint = {
     'appointment_check_in': (appId) => `/appointments/${appId}/check-in/`,
     'appointment_start': (appId) => `/appointments/${appId}/start/`,
     'appointment_complete': (appId) => `/appointments/${appId}/complete/`, // Mới bổ sung
+    'appointment_no_show': (appId) => `/appointments/${appId}/no-show/`,
 
     // Medical Records
     'appointment_medical_record': (appId) => `/appointments/${appId}/medical-record/`, // Dành cho Staff tạo record

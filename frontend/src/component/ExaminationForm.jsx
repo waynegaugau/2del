@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Form, Button, Row, Col, Table } from "react-bootstrap";
 import { authApis, endpoint } from "../configs/Apis";
 import toast from "react-hot-toast";
@@ -11,15 +11,15 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
     const [recordData, setRecordData] = useState({ symptoms: "", diagnosis: "", treatment: "", note: "" });
     const [prescriptionItems, setPrescriptionItems] = useState([]);
 
-    useEffect(() => {
-        if (show && appointment?.medical_record_id) {
-            setStep(2);
-            fetchExistingPrescription(appointment.medical_record_id);
-        } else {
-            setStep(1);
-            setRecordData({ symptoms: "", diagnosis: "", treatment: "", note: "" });
+    const fetchMedicines = async () => {
+        try {
+            const res = await authApis().get(endpoint['medicines']);
+            setMedicines(res.data.data || res.data || []);
+        } catch {
+            toast.error("Không thể tải danh sách thuốc.");
         }
-    }, [show, appointment]);
+    };
+
     const fetchExistingPrescription = async (recordId) => {
         try {
             const res = await authApis().get(endpoint['medical_record_prescription'](recordId));
@@ -29,6 +29,18 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
             console.error("Lỗi lấy đơn thuốc cũ:", ex);
         }
     };
+
+    useEffect(() => {
+        if (show && appointment?.medical_record_id) {
+            setStep(2);
+            fetchExistingPrescription(appointment.medical_record_id);
+            fetchMedicines();
+        } else {
+            setStep(1);
+            setRecordData({ symptoms: "", diagnosis: "", treatment: "", note: "" });
+            setMedicines([]);
+        }
+    }, [show, appointment]);
     const handleSubmitRecord = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -40,6 +52,7 @@ const ExaminationForm = ({ appointment, show, onHide, onComplete }) => {
             setPrescriptionId(resPres.data.id || resPres.data.data.id);
 
             setStep(2);
+            fetchMedicines();
             toast.success("Đã lưu bệnh án. Bạn có thể kê thuốc hoặc bỏ qua bước này!");
         } catch {
             toast.error("Lỗi khi lưu bệnh án.");

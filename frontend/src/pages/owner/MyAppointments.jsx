@@ -36,7 +36,7 @@ const MyAppointments = () => {
             case "CHECKED_IN": return <Badge bg="info">Đã đến phòng khám</Badge>;
             case "IN_PROGRESS": return <Badge bg="primary">Đang khám</Badge>;
             case "WAITING_PAYMENT": return <Badge style={{ backgroundColor: "#f97316", color: "#fff" }}>Chờ thanh toán</Badge>;
-            case "COMPLETED": return <Badge bg="secondary">Hoàn thành</Badge>;
+            case "COMPLETED": return <Badge bg="success">Hoàn thành</Badge>;
             case "CANCELLED": return <Badge bg="danger">Đã hủy</Badge>;
             case "NO_SHOW": return <Badge bg="dark">Vắng mặt</Badge>;
             default: return <Badge bg="light" text="dark">{status}</Badge>;

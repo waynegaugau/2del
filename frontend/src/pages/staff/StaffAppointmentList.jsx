@@ -53,8 +53,9 @@ const StaffAppointmentList = () => {
             "CHECKED_IN": { bg: "info", text: "Đã đến" },
             "IN_PROGRESS": { bg: "primary", text: "Đang khám" },
             "WAITING_PAYMENT": { bg: "payment", text: "Chờ thanh toán" },
-            "COMPLETED": { bg: "secondary", text: "Hoàn thành" },
-            "CANCELLED": { bg: "danger", text: "Đã hủy" }
+            "COMPLETED": { bg: "success", text: "Hoàn thành" },
+            "CANCELLED": { bg: "danger", text: "Đã hủy" },
+            "NO_SHOW": { bg: "dark", text: "Vắng mặt" }
         };
         const s = statusMap[status] || { bg: "light", text: status };
         if (s.bg === "payment") {
@@ -94,7 +95,7 @@ const StaffAppointmentList = () => {
                     <tbody>
                         {appointments.map(app => (
                             <tr key={app.id}>
-                                <td>{app.owner_username}</td>
+                                <td>{app.owner_full_name || app.owner_username}</td>
                                 <td>{app.pet_name}</td>
                                 <td>{app.service_name}</td>
                                 <td>{moment(app.appointment_time).format("DD/MM HH:mm")}</td>
@@ -111,10 +112,16 @@ const StaffAppointmentList = () => {
                                     )}
 
                                     {app.status === "CONFIRMED" && (
-                                        <Button size="sm" variant="info" className="me-2 text-white"
-                                            onClick={() => updateStatus(app.id, endpoint['appointment_check_in'], "Đã check-in")}>
-                                            Tiếp đón
-                                        </Button>
+                                        <>
+                                            <Button size="sm" variant="info" className="me-2 text-white"
+                                                onClick={() => updateStatus(app.id, endpoint['appointment_check_in'], "Đã check-in")}>
+                                                Tiếp đón
+                                            </Button>
+                                            <Button size="sm" variant="outline-dark"
+                                                onClick={() => updateStatus(app.id, endpoint['appointment_no_show'], "Đã đánh dấu vắng mặt")}>
+                                                Vắng mặt
+                                            </Button>
+                                        </>
                                     )}
 
                                     {app.status === "CHECKED_IN" && (

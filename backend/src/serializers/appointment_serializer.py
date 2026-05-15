@@ -7,6 +7,7 @@ from src.serializers.payment_serializer import PaymentSerializer
 
 class AppointmentSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source="owner.username", read_only=True)
+    owner_full_name = serializers.CharField(source="owner.full_name", read_only=True)
     pet_name = serializers.CharField(source="pet.name", read_only=True)
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
     service_name = serializers.CharField(source="service.name", read_only=True)
@@ -19,6 +20,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "owner_username",
+            "owner_full_name",
             "pet",
             "pet_name",
             "clinic",
